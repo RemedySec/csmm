@@ -1,0 +1,38 @@
+id: "csmm-iam-012"
+name: "Restrict Regions via SCP"
+level: 2
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  A Service Control Policy must deny all AWS service actions in regions that
+  are not explicitly approved for use by the organization. The policy uses a
+  NotAction list to exempt global services (IAM, STS, S3 control plane, etc.)
+  and a StringNotEquals condition on aws:RequestedRegion to block any API call
+  targeting an unapproved region.
+
+risk: >
+  Resources provisioned in unused or unapproved regions fall outside the scope
+  of centrally deployed monitoring, logging, and security tooling, creating
+  blind spots that attackers can exploit to establish persistent footholds.
+  Shadow resources in unexpected regions also increase the attack surface and
+  complicate compliance audits, as automated scanners and Config rules are
+  often region-scoped and may not be deployed everywhere.
+
+verification:
+  - "List SCPs at the root or target OU and confirm a Deny statement with aws:RequestedRegion StringNotEquals the approved region list."
+  - "Verify the NotAction list exempts iam:*, sts:*, s3:GetBucketLocation, support:*, and other genuinely global services to avoid breakage."
+  - "From a member account, attempt to create an EC2 instance in a non-approved region (e.g., ap-southeast-2 if not approved) and confirm denial."
+  - "Review the approved region list against the organization's data residency and compliance requirements to ensure it is minimally scoped."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html#example-scp-deny-region"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-requestedregion"
+  - "https://aws.amazon.com/blogs/security/how-to-use-service-control-policies-to-set-permission-guardrails-across-accounts-in-your-aws-organization/"

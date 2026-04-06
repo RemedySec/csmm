@@ -1,0 +1,43 @@
+id: "csmm-gov-001"
+name: "CloudTrail Enabled in All Regions"
+level: 2
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  A multi-region CloudTrail trail must be enabled in the organization management
+  account and all member accounts, with the IsMultiRegionTrail flag set to true
+  and IncludeGlobalServiceEvents set to true. The trail must be active and
+  deliver logs without error. Using AWS Organizations integration, a single
+  organization-level trail should cover all member accounts to ensure consistent
+  coverage without relying on per-account configuration.
+
+risk: >
+  Gaps in CloudTrail coverage — whether from trails disabled in specific
+  accounts, regions not covered by single-region trails, or global service
+  events not captured — create blind spots where unauthorized actions can occur
+  without generating any audit evidence. Attackers who are aware of CloudTrail
+  coverage gaps deliberately exploit uncovered regions and services to conduct
+  reconnaissance, establish persistence, and exfiltrate data with no risk of
+  generating log entries that would trigger detection.
+
+verification:
+  - "Run aws cloudtrail describe-trails --include-shadow-trails and confirm at least one trail has IsMultiRegionTrail: true and IncludeGlobalServiceEvents: true."
+  - "Run aws cloudtrail get-trail-status --name <trail-arn> and confirm IsLogging is true and LatestDeliveryError is absent or null."
+  - "Deploy AWS Config rule multi-region-cloudtrail-enabled and verify compliance across all management and member accounts."
+  - "Confirm the CloudTrail S3 destination bucket exists, is accessible, and has received log files in the past 24 hours."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "AU-2"
+
+references:
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-trails"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/multi-region-cloudtrail-enabled.html"

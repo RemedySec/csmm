@@ -1,0 +1,38 @@
+id: "csmm-iam-011"
+name: "Require MFA for Sensitive Actions via SCP"
+level: 2
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  A Service Control Policy must deny high-impact actions — such as IAM user
+  deletion, policy attachment, secret deletion, and KMS key scheduling — unless
+  the requesting principal has authenticated with MFA (aws:MultiFactorAuthPresent
+  condition key equals true). This adds a mandatory second factor gate for
+  destructive or privilege-escalating operations across all member accounts.
+
+risk: >
+  Compromised long-term credentials (access keys or passwords) obtained through
+  phishing, credential stuffing, or repository leaks can be used to perform
+  destructive or privilege-escalating actions without a second factor. Requiring
+  MFA for sensitive actions limits the blast radius of a stolen credential to
+  read-only or low-impact operations, buying time for detection and response
+  teams to revoke the credential before irreversible damage occurs.
+
+verification:
+  - "Review the SCP for a Deny statement with a condition on aws:MultiFactorAuthPresent: 'false' covering targeted sensitive actions."
+  - "Confirm the action list includes at minimum: iam:DeleteUser, iam:AttachRolePolicy, secretsmanager:DeleteSecret, kms:ScheduleKeyDeletion, ec2:TerminateInstances."
+  - "Using an IAM user without an active MFA session, attempt one of the restricted actions and confirm it is denied."
+  - "Verify that federated or SSO sessions that carry MFA context propagate the aws:MultiFactorAuthPresent: true condition correctly."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-2(1)"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-multifactorauthpresent"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_iam.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html"

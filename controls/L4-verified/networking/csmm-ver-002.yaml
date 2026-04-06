@@ -1,0 +1,38 @@
+id: "csmm-ver-002"
+name: "Terraform Drift Detection Runs Weekly"
+level: 4
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  An automated Terraform drift detection job must execute at minimum weekly against
+  all production state files, comparing the actual cloud resource state to the
+  declared IaC configuration. Any detected drift must generate an alert to the
+  infrastructure team within 24 hours of detection, and all drift findings must
+  be resolved — either by updating IaC to reflect intentional changes or by
+  reverting the manual change — within a defined remediation SLA.
+
+risk: >
+  Manual console changes, hotfixes, and emergency patches create configuration drift
+  that is invisible to IaC-based security reviews. Drifted resources accumulate
+  untracked changes that bypass change management processes, security reviews, and
+  peer approval, creating a shadow configuration that may contain misconfigurations,
+  weakened security controls, or unapproved architectural changes.
+
+verification:
+  - "Confirm a scheduled pipeline or cron job runs terraform plan against all production workspaces at least once per week"
+  - "Review the last 4 weeks of drift detection run logs and confirm they completed successfully"
+  - "Verify that any non-empty plan output (indicating drift) triggers an alert to the on-call team or a ticket in the issue tracker"
+  - "Audit open drift findings and confirm all are either acknowledged with a resolution timeline or remediated"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "CM-3"
+
+references:
+  - "https://developer.hashicorp.com/terraform/cli/commands/plan"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager.html"
+  - "https://aws.amazon.com/blogs/devops/detecting-configuration-drift-and-notifying-your-team-with-aws-config/"

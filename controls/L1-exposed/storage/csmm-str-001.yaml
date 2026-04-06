@@ -1,0 +1,45 @@
+id: "csmm-str-001"
+name: "S3 Account-Level Public Access Block"
+level: 1
+pillar: "storage"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Enable all four S3 Block Public Access settings at the AWS account level:
+  BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets. These
+  settings act as a global guardrail that prevents any bucket in the account from becoming
+  publicly accessible, regardless of individual bucket policies or ACLs. Apply via
+  aws s3control put-public-access-block and enforce via AWS Config rule
+  's3-account-level-public-access-blocks-periodic'.
+
+risk: >
+  A single misconfigured bucket policy or ACL can expose entire datasets, customer PII, or
+  proprietary source code to the public internet. Account-level Block Public Access is the
+  most effective single control for preventing S3 data exposure because it operates as an
+  override: even if a developer or automation accidentally sets a permissive bucket policy,
+  the account-level block prevents public access from being granted. S3 data exposure is
+  consistently among the top sources of large-scale data breaches.
+
+verification:
+  - "Run: aws s3control get-public-access-block --account-id <account-id> | jq '.PublicAccessBlockConfiguration' — all four values (BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, RestrictPublicBuckets) must be true."
+  - "Confirm AWS Config rule 's3-account-level-public-access-blocks-periodic' is ENABLED and reports COMPLIANT."
+  - "Verify Security Hub control S3.1 is passing."
+  - "Attempt to apply a bucket policy granting s3:GetObject to Principal: '*' on a test bucket — the operation should be blocked with an 'Access Denied' error."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.1.4"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 07 — How do you classify your data?"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+  - "https://docs.aws.amazon.com/cli/latest/reference/s3control/put-public-access-block.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-account-level-public-access-blocks-periodic.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-1"

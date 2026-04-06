@@ -1,0 +1,43 @@
+id: "csmm-iam-006"
+name: "Remove Unused Credentials After 45 Days"
+level: 1
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  IAM user credentials (console passwords and access keys) that have not been used in the
+  last 45 days must be disabled; credentials unused for 90 days must be deleted and the
+  IAM user decommissioned if no other active credentials exist. Use the AWS Config rule
+  'iam-user-unused-credentials-check' with maxCredentialUsageAge set to 45 to detect
+  violations continuously. Automate remediation via Systems Manager Automation or Lambda.
+
+risk: >
+  Unused credentials represent unmonitored attack surface. A credential that has not been
+  used in 45 or more days is unlikely to be tied to active operations, meaning any usage
+  event is anomalous and likely malicious. Dormant credentials are frequently targeted by
+  attackers who harvest old keys from public repositories, leaked databases, or stale
+  configuration files, knowing that unused credentials are rarely monitored in SIEM tooling.
+
+verification:
+  - "Run: aws iam generate-credential-report and inspect password_last_used and access_key_last_used_date columns — no active credentials with last-used date older than 45 days."
+  - "Confirm AWS Config rule 'iam-user-unused-credentials-check' is ENABLED with maxCredentialUsageAge set to 45 and reports COMPLIANT."
+  - "Verify CloudTrail or GuardDuty has alerting configured for any API call made using credentials that have been inactive for 45+ days (anomalous activity detection)."
+  - "Confirm a Jira or ServiceNow ticket is auto-created for each non-compliant IAM user with a 5-business-day SLA for credential deactivation."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.12"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-2(3)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/iam-user-unused-credentials-check.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_manage.html#id_users_deleting"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-8"

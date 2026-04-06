@@ -1,0 +1,37 @@
+id: "csmm-str-019"
+name: "KMS CMK Key Rotation Enabled"
+level: 3
+pillar: "storage"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All AWS KMS Customer Managed Keys (CMKs) used for data encryption must have
+  automatic key rotation enabled with a rotation period not exceeding 365 days.
+  Key rotation ensures that a new cryptographic key material is generated annually
+  while AWS transparently re-wraps existing data keys, requiring no application changes.
+
+risk: >
+  Long-lived encryption keys increase the blast radius if key material is ever exposed
+  through a cryptographic weakness, insider access, or key management system compromise.
+  Regulatory frameworks increasingly require demonstrable key rotation practices, and
+  failure to rotate is a common audit finding that can block compliance certifications.
+
+verification:
+  - "List all customer-managed KMS keys: aws kms list-keys --query 'Keys[*].KeyId'"
+  - "For each CMK, check rotation status: aws kms get-key-rotation-status --key-id <key-id>"
+  - "Confirm rotation is enabled (KeyRotationEnabled: true) for every CMK not classified as an asymmetric or HMAC key"
+  - "Review key rotation schedules and confirm no CMK has a rotation period greater than 365 days"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.8"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-12"
+
+references:
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html"
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html#kms-4"

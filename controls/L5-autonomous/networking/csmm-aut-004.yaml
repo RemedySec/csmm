@@ -1,0 +1,40 @@
+id: "csmm-aut-004"
+name: "Anomaly-Driven GuardDuty Auto-Isolate"
+level: 5
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  High-severity GuardDuty findings that indicate active compromise — such as
+  UnauthorizedAccess:EC2/SSHBruteForce, Trojan:EC2/BlackholeTraffic, or
+  CryptoCurrency:EC2/BitcoinTool — must trigger automated network isolation of
+  the affected instance. Isolation is achieved by replacing the instance's security
+  groups with a quarantine group that blocks all inbound and outbound traffic except
+  to the forensic logging endpoint, enabling evidence collection without further
+  lateral movement.
+
+risk: >
+  Manual response to active GuardDuty threats during business hours typically takes
+  30 to 60 minutes and is effectively unavailable overnight or on weekends. During
+  this window a compromised instance can perform lateral movement, exfiltrate data
+  to external endpoints, establish C2 channels, or pivot to adjacent services using
+  instance credentials. Automated isolation reduces the blast radius to the single
+  affected instance.
+
+verification:
+  - "Confirm an EventBridge rule targets GuardDuty findings with severity >= 7.0 and routes to an isolation Lambda"
+  - "Review the isolation Lambda to confirm it replaces instance security groups with the quarantine group and creates a CloudWatch alarm for ongoing monitoring"
+  - "Run a simulated GuardDuty finding using the GenerateSampleFindings API and confirm the isolation workflow executes end-to-end"
+  - "Confirm an automated PagerDuty or SNS alert notifies the security team with finding details and the affected instance ID immediately after isolation"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.3"
+  - framework: "NIST 800-53"
+    control: "IR-4(1)"
+
+references:
+  - "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html"
+  - "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_remediate.html"
+  - "https://aws.amazon.com/blogs/security/how-to-use-amazon-guardduty-and-aws-web-application-firewall-to-automatically-block-suspicious-hosts/"

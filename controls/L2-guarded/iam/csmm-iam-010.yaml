@@ -1,0 +1,41 @@
+id: "csmm-iam-010"
+name: "Deny CloudTrail Disable via SCP"
+level: 2
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  A Service Control Policy must deny the cloudtrail:StopLogging,
+  cloudtrail:DeleteTrail, and cloudtrail:UpdateTrail actions across all member
+  accounts. This ensures that no principal — including account-level
+  administrators — can disable or tamper with the audit trail without explicit
+  organizational approval via a break-glass process.
+
+risk: >
+  Disabling CloudTrail is frequently the first action taken by attackers after
+  gaining elevated access, as it erases the audit trail and makes post-breach
+  investigation impossible. Without a complete, tamper-proof log of API
+  activity, security teams cannot determine the scope of a compromise, identify
+  affected resources, or meet regulatory evidence requirements during incident
+  response.
+
+verification:
+  - "List all SCPs and inspect their statements for explicit Deny on cloudtrail:StopLogging, cloudtrail:DeleteTrail, and cloudtrail:UpdateTrail."
+  - "Confirm the SCP is attached to the organization root or all relevant OUs with no exemptions for non-break-glass roles."
+  - "From a member account with admin permissions, attempt aws cloudtrail stop-logging --name <trail-arn> and verify the action is blocked."
+  - "Validate that a break-glass SCP or tag-based exception exists only for the designated security account and is properly scoped."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "AU-6"
+
+references:
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_cloudtrail.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html"

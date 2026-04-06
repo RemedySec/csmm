@@ -1,0 +1,42 @@
+id: "csmm-net-004"
+name: "No Auto-Assign Public IPs in Subnets"
+level: 1
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All VPC subnets must have the MapPublicIpOnLaunch attribute set to false. EC2 instances
+  that require internet access must use NAT Gateways for outbound traffic. Instances that
+  require inbound internet exposure must sit behind an ALB, NLB, or CloudFront distribution —
+  not be directly internet-reachable. Use the AWS Config rule
+  'subnet-auto-assign-public-ip-disabled' to detect non-compliant subnets. Enforce at
+  infrastructure provisioning time via IaC linting (cfn-guard, tfsec) and Terraform policies.
+
+risk: >
+  When MapPublicIpOnLaunch is enabled, every EC2 instance launched into that subnet
+  automatically receives a public IPv4 address, regardless of whether the engineer intended
+  public exposure. This is a common source of accidental internet exposure — a developer
+  launches a test instance into a misconfigured subnet and it becomes immediately reachable
+  from the internet. Public IPs also bypass security group rules that reference private CIDR
+  ranges as the source, making network segmentation analysis more complex.
+
+verification:
+  - "Run: aws ec2 describe-subnets | jq '[.Subnets[] | select(.MapPublicIpOnLaunch == true)] | length' — expected 0 in production environments."
+  - "Confirm AWS Config rule 'subnet-auto-assign-public-ip-disabled' is ENABLED and reports COMPLIANT across all regions."
+  - "For any subnet where public IP assignment is a hard requirement, confirm the exception is documented with a business justification and reviewed quarterly."
+  - "Verify that Terraform modules for VPC provisioning set map_public_ip_on_launch = false by default, and tfsec or Checkov rules flag any override."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/modify-subnets.html#subnet-public-ip"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-15"

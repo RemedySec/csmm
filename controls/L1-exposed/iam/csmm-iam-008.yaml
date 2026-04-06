@@ -1,0 +1,47 @@
+id: "csmm-iam-008"
+name: "Deny Root Usage via SCP"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Attach a Service Control Policy (SCP) at the organization root or production OU that
+  explicitly denies all actions for the root user in member accounts. The SCP should use a
+  Deny effect with a principal condition of "AWS": "*" and a condition of
+  "aws:PrincipalType": "Root". This prevents root from being used for any operation in member
+  accounts even if root credentials are compromised, forcing all operations through auditable
+  IAM identities.
+
+risk: >
+  The root account in any AWS member account bypasses every IAM policy, permission boundary,
+  and resource-based policy — it has unconditional access to all services and data. SCPs are
+  the only AWS-native mechanism capable of restricting root actions in member accounts.
+  Without this SCP, a threat actor who gains root credentials to any member account can
+  perform irreversible actions — deleting CloudTrail, disabling GuardDuty, destroying
+  backups — that no other IAM control can prevent.
+
+verification:
+  - "Run: aws organizations list-policies --filter SERVICE_CONTROL_POLICY and verify a policy with a root-denying statement is attached to the root or target OU."
+  - "Inspect the SCP content and confirm it contains: Effect: Deny, Action: *, Principal: *, Condition: StringEquals: aws:PrincipalType: Root."
+  - "Attempt to perform a test action as the root user in a member account (e.g., aws s3 ls) — the call should be denied with an explicit SCP error."
+  - "Verify the management/payer account is excluded from the root-deny SCP (the SCP cannot apply to the management account itself and break-glass procedures must be documented separately)."
+  - "Confirm AWS Config rule or Security Hub check is monitoring for CloudTrail events by the root principal in member accounts, triggering an immediate PagerDuty alert."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.7"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-6(10)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html#example-scp-restrict-root"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-6"
+  - "https://docs.aws.amazon.com/controltower/latest/controlreference/strongly-recommended-controls.html"

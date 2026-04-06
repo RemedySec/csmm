@@ -1,0 +1,43 @@
+id: "csmm-iam-005"
+name: "Rotate Access Keys Within 90 Days"
+level: 1
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All IAM user access keys must be rotated within a rolling 90-day window. Keys older than
+  90 days must be deactivated and keys older than 120 days must be deleted. Automate detection
+  using the AWS Config rule 'access-keys-rotated' with a maxAccessKeyAge parameter of 90.
+  Where possible, replace IAM user keys entirely with IAM role-based access using STS
+  AssumeRole or OIDC federation (see csmm-iam-004).
+
+risk: >
+  Access keys that are not regularly rotated extend the exploitation window indefinitely if
+  a key is silently exfiltrated from source code, logs, backups, or developer endpoints.
+  An attacker with a stale key that was never rotated can maintain persistent access for
+  months or years without triggering any detection, since the key remains valid. Regular
+  rotation limits the blast radius of any undetected key exposure.
+
+verification:
+  - "Run: aws iam generate-credential-report && aws iam get-credential-report to check access_key_1_last_rotated and access_key_2_last_rotated columns — all active keys must be within 90 days."
+  - "Confirm AWS Config rule 'access-keys-rotated' is ENABLED with maxAccessKeyAge set to 90 and reports COMPLIANT for all IAM users."
+  - "Verify a Lambda or Systems Manager Automation runbook is in place to auto-deactivate keys beyond 90 days and notify the owning team via SNS."
+  - "Check that no access keys appear in CloudTrail as having been used but not rotated — query Athena over CloudTrail logs for AccessKeyId values older than 90 days."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.14"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-5(1)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_RotateAccessKey"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/access-keys-rotated.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-3"

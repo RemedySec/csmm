@@ -1,0 +1,47 @@
+id: "csmm-cmp-004"
+name: "Block Public EBS Snapshot Sharing"
+level: 1
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All EBS snapshots in every AWS account and region must be set to private. No snapshot may
+  have its createVolumePermission granted to Group: all. Enforce via an SCP that denies
+  ec2:ModifySnapshotAttribute when the request grants group 'all' create volume permission.
+  Audit continuously using the AWS Config rule 'ebs-snapshot-public-restorable-check'. Any
+  public snapshot must be immediately revoked using aws ec2 modify-snapshot-attribute
+  --snapshot-id <id> --attribute createVolumePermission --operation-type remove
+  --group-names all.
+
+risk: >
+  EBS snapshots are point-in-time copies of entire block storage volumes and contain
+  everything written to the volume at the time of the snapshot: database files, application
+  data, secrets baked into the operating system, environment variable files, SSH host keys,
+  and any credentials cached in memory that were flushed to disk. A publicly accessible
+  snapshot can be restored to a volume by any AWS account, giving an attacker a full forensic
+  copy of the disk. Automated tools actively scan for and immediately restore any public EBS
+  snapshots to harvest credentials and data.
+
+verification:
+  - "Run: aws ec2 describe-snapshots --owner-ids self --restorable-by-user-ids all | jq '.Snapshots | length' — expected 0."
+  - "Run this check across all active regions."
+  - "Confirm AWS Config rule 'ebs-snapshot-public-restorable-check' is ENABLED and reports COMPLIANT in all regions."
+  - "Verify an SCP is in place denying ec2:ModifySnapshotAttribute with a condition that prevents adding Group: all to createVolumePermission."
+  - "Confirm the backup automation (AWS Backup, DLM, custom Lambda) does not have any step that sets snapshots to public post-creation."
+  - "Verify GuardDuty finding 'Discovery:EC2/SnapshotTampering' alerting is active in all regions."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+  - framework: "AWS Well-Architected"
+    control: "SEC 07 — How do you classify your data?"
+
+references:
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/ebs-snapshot-public-restorable-check.html"
+  - "https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-snapshot-attribute.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-39"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"

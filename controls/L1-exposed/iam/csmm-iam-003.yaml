@@ -1,0 +1,45 @@
+id: "csmm-iam-003"
+name: "Enable Root Account MFA with Hardware Token"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  The AWS root account must have MFA enabled, and the MFA device must be a hardware TOTP
+  token (not a virtual authenticator app) for accounts in regulated or production environments.
+  The hardware token must be stored in a physically secured location (e.g., a safe or locked
+  cabinet) with documented access procedures. Use the AWS Config rule 'root-account-mfa-enabled'
+  to continuously verify this requirement.
+
+risk: >
+  The root account bypasses all IAM policies, SCPs, and permission boundaries — it has
+  unconditional access to every AWS resource and account-level operation. Without MFA, a
+  compromised root password grants immediate, irrevocable account-level control including the
+  ability to close the account, remove all other principals, and override any security control.
+  A hardware token eliminates the risk of virtual MFA seed compromise via malware or cloud
+  backup exposure.
+
+verification:
+  - "Run: aws iam get-account-summary | jq '.SummaryMap.AccountMFAEnabled' — expected value is 1."
+  - "Confirm AWS Config rule 'root-account-mfa-enabled' is enabled and reports COMPLIANT."
+  - "Verify in the IAM console under Account Settings that the root MFA device type is listed as 'Hardware MFA device' (not 'Virtual MFA device')."
+  - "Document the physical location of the hardware token and confirm at least two authorized personnel have emergency access procedures in place."
+  - "Set up a CloudWatch alarm on CloudTrail for any ConsoleLogin event by root without MFA, routing to PagerDuty or equivalent on-call system."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.6"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-2(1)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/root-account-mfa-enabled.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-9"

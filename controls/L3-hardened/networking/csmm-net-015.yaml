@@ -1,0 +1,36 @@
+id: "csmm-net-015"
+name: "ALB Origin Protection"
+level: 3
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Application Load Balancers that sit behind a CDN or WAF layer must be protected
+  from direct internet access by validating a shared secret header injected by
+  CloudFront or the upstream WAF. ALB listener rules should return 403 for any
+  request that does not carry the expected header value, ensuring all traffic is
+  inspected before reaching the origin.
+
+risk: >
+  Bypassing a CDN or WAF by targeting the ALB directly allows attackers to skip
+  application-layer filtering, rate limiting, and DDoS mitigation controls. Direct
+  access to the origin also exposes internal error messages, service fingerprints,
+  and can saturate origin capacity in ways the CDN would otherwise absorb.
+
+verification:
+  - "List all internet-facing ALBs: aws elbv2 describe-load-balancers --query 'LoadBalancers[?Scheme==`internet-facing`]'"
+  - "For each ALB, retrieve listener rules and confirm a default rule returns 403 unless a specific header matches the expected secret value"
+  - "Attempt a direct curl request to the ALB DNS name without the secret header and confirm a 403 response"
+  - "Confirm the header secret is rotated periodically and stored in AWS Secrets Manager rather than hardcoded in CloudFront configuration"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html"
+  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-update-rules.html"
+  - "https://aws.amazon.com/blogs/networking-and-content-delivery/restricting-access-to-your-origin-using-aws-waf/"

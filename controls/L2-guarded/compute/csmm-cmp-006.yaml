@@ -1,0 +1,40 @@
+id: "csmm-cmp-006"
+name: "Enforce IMDSv2 via SCP"
+level: 2
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  A Service Control Policy must deny the ec2:RunInstances action when the
+  MetadataOptions.HttpTokens parameter is not set to required. This SCP
+  enforcement layer prevents any principal in member accounts from launching
+  new EC2 instances with IMDSv1 enabled, complementing instance-level
+  configuration checks with an organizational guardrail that cannot be
+  overridden by account administrators.
+
+risk: >
+  Without an SCP enforcing IMDSv2 at launch, individual account administrators
+  or automated deployment pipelines can create new instances with IMDSv1
+  enabled, either through misconfiguration or deliberate policy. A single new
+  IMDSv1-enabled instance exposed to an SSRF vulnerability can be used to
+  exfiltrate IAM credentials, potentially compromising the entire AWS account.
+  The SCP ensures that even if instance-level controls are not applied
+  correctly, the API call to create a vulnerable instance is blocked outright.
+
+verification:
+  - "Inspect SCPs for a Deny on ec2:RunInstances with a condition requiring ec2:MetadataHttpTokens equals required."
+  - "Confirm the SCP is attached to the organization root or all applicable OUs and has no overly broad NotPrincipal exemptions."
+  - "Attempt to launch an EC2 instance with --metadata-options HttpTokens=optional from a member account and confirm the request is denied."
+  - "Verify the SCP does not inadvertently block legitimate launches by testing a compliant launch with --metadata-options HttpTokens=required."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+
+references:
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_ec2.html"
+  - "https://aws.amazon.com/blogs/security/get-the-full-benefits-of-imdsv2-and-disable-imdsv1-across-your-aws-infrastructure/"

@@ -1,0 +1,45 @@
+id: "csmm-str-002"
+name: "S3 Bucket-Level Public Access Block"
+level: 1
+pillar: "storage"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  In addition to the account-level block (csmm-str-001), all four Block Public Access
+  settings must be explicitly enabled at the individual bucket level for every S3 bucket:
+  BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets. Bucket-level
+  settings provide defense in depth for scenarios where the account-level block is disabled
+  during a migration or misconfiguration event. Enforce via AWS Config rule
+  's3-bucket-level-public-access-prohibited'.
+
+risk: >
+  Account-level Block Public Access can be inadvertently or maliciously disabled by any
+  principal with s3:PutAccountPublicAccessBlock permission, instantly re-exposing all buckets
+  that rely solely on the account-level control. Bucket-level enforcement ensures that each
+  bucket independently enforces its own public access restriction, requiring an attacker or
+  operator to explicitly modify two independent controls before a bucket can be made public.
+  This dual-layer defense is required by several compliance frameworks as defense in depth.
+
+verification:
+  - "Run: aws s3api list-buckets | jq -r '.Buckets[].Name' | xargs -I{} aws s3api get-public-access-block --bucket {} — all four PublicAccessBlockConfiguration values must be true for every bucket."
+  - "Confirm AWS Config rule 's3-bucket-level-public-access-prohibited' is ENABLED and reports COMPLIANT for all S3 buckets."
+  - "Verify Security Hub control S3.8 is passing."
+  - "Confirm IaC templates (Terraform/CloudFormation) set all four block_public_* attributes to true on every aws_s3_bucket_public_access_block resource, and Checkov rule CKV_AWS_53-56 passes in CI."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.1.5"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 07 — How do you classify your data?"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html#access-control-block-public-access-options"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-level-public-access-prohibited.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-8"
+  - "https://www.checkov.io/5.Policy%20Index/terraform.html"

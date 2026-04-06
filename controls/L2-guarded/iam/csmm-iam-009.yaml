@@ -1,0 +1,36 @@
+id: "csmm-iam-009"
+name: "Deny Leaving Organization via SCP"
+level: 2
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  A Service Control Policy (SCP) must be attached at the root or relevant OUs
+  that explicitly denies the organizations:LeaveOrganization action for all
+  principals. This prevents any member account from unilaterally removing itself
+  from the AWS Organization and escaping centrally enforced guardrails.
+
+risk: >
+  If a member account successfully leaves the organization, all SCPs and
+  permission boundaries enforced at the organization level immediately cease to
+  apply. An attacker or insider with sufficient IAM permissions could exploit
+  this to bypass every guardrail and operate without restriction, undermining
+  the entire control hierarchy established by security and compliance teams.
+
+verification:
+  - "In the AWS Organizations console or via CLI, list all SCPs attached to the root and each OU: aws organizations list-policies --filter SERVICE_CONTROL_POLICY"
+  - "For each SCP, confirm a Deny statement covers organizations:LeaveOrganization with Effect: Deny and no NotPrincipal exceptions that would allow bypass."
+  - "Attempt to call aws organizations leave-organization from a test member account and confirm the request is denied with an explicit SCP denial message."
+  - "Review the SCP inheritance chain to ensure no child OU overrides or gaps exist that leave accounts unprotected."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-6"
+
+references:
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  - "https://docs.aws.amazon.com/organizations/latest/APIReference/API_LeaveOrganization.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html"

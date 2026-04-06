@@ -1,0 +1,41 @@
+id: "csmm-cmp-008"
+name: "ASG Health Checks Enabled"
+level: 2
+pillar: "compute"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  All Auto Scaling Groups must have EC2 health checks enabled as a minimum,
+  and any ASG whose instances are registered with an Elastic Load Balancer must
+  use ELB health checks (HealthCheckType: ELB) rather than the less sensitive
+  EC2 health check type. The health check grace period must be configured to
+  a value that allows instances to finish initializing but does not mask
+  prolonged startup failures.
+
+risk: >
+  Without ELB health checks, an Auto Scaling Group will keep instances in
+  service as long as the underlying EC2 instance is reachable, even if the
+  application process has crashed, is deadlocked, or is returning error
+  responses to every request. Unhealthy instances continue receiving production
+  traffic, degrading user experience and potentially exposing error messages or
+  partial responses that leak sensitive information. Security-relevant processes
+  such as log agents, endpoint protection, and SSMD agents may also fail
+  silently without triggering instance replacement.
+
+verification:
+  - "Run aws autoscaling describe-auto-scaling-groups and confirm HealthCheckType is ELB for all ASGs attached to a load balancer target group."
+  - "Verify the HealthCheckGracePeriod is not set to 0 (which skips grace) or an excessively large value (>600 seconds) that masks failures."
+  - "Use AWS Config rule autoscaling-group-elb-healthcheck-required and verify compliance across all accounts."
+  - "Review CloudWatch alarms for ASG health check failure metrics to confirm alerting is in place for persistent unhealthy instance patterns."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "SI-4"
+
+references:
+  - "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/autoscaling-group-elb-healthcheck-required.html"
+  - "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html"

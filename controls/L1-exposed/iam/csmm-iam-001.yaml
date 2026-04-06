@@ -1,0 +1,41 @@
+id: "csmm-iam-001"
+name: "Enforce MFA for All Console Users"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Every IAM user with AWS Management Console access must have multi-factor authentication
+  (MFA) enabled. Configure an AWS Config rule (mfa-enabled-for-iam-console-access) to
+  continuously evaluate compliance and alert on any non-compliant user. Users who fail to
+  enroll within the remediation window must have console access revoked until MFA is configured.
+
+risk: >
+  Stolen or phished passwords grant immediate, unrestricted console access to any IAM user
+  without MFA. Credential theft via phishing, credential stuffing, and password spraying is
+  the most common initial access vector in cloud breaches. A single compromised console user
+  can escalate privileges, exfiltrate data, or deploy ransomware across the entire account.
+
+verification:
+  - "Run: aws iam generate-credential-report && aws iam get-credential-report | jq '.Content' | base64 -d | csvkit | grep 'false' in mfa_active column — zero results expected."
+  - "Confirm AWS Config rule 'mfa-enabled-for-iam-console-access' exists and reports COMPLIANT for all resources."
+  - "Attempt console login with a test IAM user that has no MFA device registered — access should be blocked by IAM policy condition aws:MultiFactorAuthPresent."
+  - "Verify an IAM permission boundary or SCP containing a Deny on all actions when aws:MultiFactorAuthPresent is false is attached at the account or OU level."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.10"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_configure-api-require.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/mfa-enabled-for-iam-console-access.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#enable-mfa-for-privileged-users"

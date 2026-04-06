@@ -1,0 +1,45 @@
+id: "csmm-iam-004"
+name: "No IAM User Creation — Use SSO/Federation"
+level: 1
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Human access to AWS must be granted exclusively via AWS IAM Identity Center (SSO) or a
+  federated identity provider (e.g., Okta, Azure AD, Ping) using SAML 2.0 or OIDC. IAM user
+  creation must be blocked via an SCP at the organization root or OU level. Existing IAM users
+  must be migrated to federated identities and decommissioned within a defined remediation
+  window. Break-glass emergency IAM users, if required, must be strictly controlled and audited.
+
+risk: >
+  IAM users carry long-lived static credentials (passwords and access keys) that persist until
+  manually rotated or deleted. Federated identities issue short-lived STS tokens (typically
+  1–12 hours) that are automatically invalidated, dramatically reducing the window of exposure
+  from credential theft. Long-lived IAM user credentials found in code repositories, CI/CD
+  pipelines, or developer machines are a leading cause of cloud account compromise.
+
+verification:
+  - "Verify an SCP is attached at the organization root or production OU with a Deny on iam:CreateUser for all principals except the designated break-glass automation role."
+  - "Run: aws iam list-users | jq '.Users | length' — expected 0 in production accounts (or only documented break-glass accounts)."
+  - "Confirm AWS IAM Identity Center is configured with an external IdP as the identity source, and all permission sets map to the correct groups."
+  - "Verify all CI/CD pipelines use OIDC-based role assumption (e.g., GitHub Actions OIDC to IAM role) rather than stored IAM user access keys."
+  - "Confirm break-glass IAM users (if any) have CloudTrail alerting on any credential use, and keys are rotated after each use."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.2"
+  - framework: "NIST 800-53"
+    control: "IA-5"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_iam.html"
+  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/saml-based-federation-amazon-cognito/welcome.html"

@@ -1,0 +1,43 @@
+id: "csmm-iam-002"
+name: "No Root Account Access Keys"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  The AWS root account must have no active or inactive access keys. If root access keys exist,
+  deactivate and delete them immediately via the IAM console or AWS CLI. All programmatic
+  operations must be performed using least-privilege IAM roles. Use AWS Config rule
+  'iam-root-access-key-check' to enforce continuous detection of any root key creation.
+
+risk: >
+  Root account access keys grant unrestricted programmatic access to every AWS service and
+  cannot be scoped or restricted by IAM policies, SCPs, or permission boundaries. A leaked
+  root key allows a threat actor to delete all IAM entities, disable CloudTrail, remove
+  GuardDuty, and exfiltrate or destroy all data in the account with no ability to block the
+  action via standard IAM controls. There is no legitimate operational use case that requires
+  root access keys over a properly scoped IAM role.
+
+verification:
+  - "Run: aws iam get-account-summary | jq '.SummaryMap.AccountAccessKeysPresent' — expected value is 0."
+  - "Confirm AWS Config rule 'iam-root-access-key-check' is enabled and reports COMPLIANT."
+  - "Set up a CloudWatch Events rule on CloudTrail event CreateAccessKey for the root user, routing to an SNS topic for immediate alerting."
+  - "Verify no access key ID prefixed with the root account ID is present in any secrets manager, CI/CD pipeline, or configuration file."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.4"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-6"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_delete-key"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/iam-root-access-key-check.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#lock-away-credentials"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-4"

@@ -1,0 +1,36 @@
+id: "csmm-net-017"
+name: "WAF Associated with ALBs"
+level: 3
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Every internet-facing Application Load Balancer must have an AWS WAF Web ACL
+  associated with it. The Web ACL must include at minimum the AWS Managed Rules
+  Common Rule Set and the Known Bad Inputs rule group, with logging enabled and
+  directed to a centralized log destination for security monitoring.
+
+risk: >
+  ALBs without WAF protection have no application-layer filtering for SQL injection,
+  cross-site scripting, remote file inclusion, and other OWASP Top 10 attack patterns.
+  A single unprotected ALB can serve as an entry point that bypasses the organization's
+  broader WAF investment and leaves application vulnerabilities directly exploitable
+  from the internet.
+
+verification:
+  - "List all internet-facing ALBs and cross-reference with WAF associations: aws wafv2 list-resources-for-web-acl --resource-type APPLICATION_LOAD_BALANCER"
+  - "Identify any ALB ARNs not present in the WAF association list"
+  - "For each associated Web ACL, confirm AWS-AWSManagedRulesCommonRuleSet and AWSManagedRulesKnownBadInputsRuleSet are present and set to Block"
+  - "Confirm WAF logging is enabled and logs are delivered to the central security log bucket or SIEM"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html"
+  - "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html"
+  - "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"

@@ -1,0 +1,44 @@
+id: "csmm-iam-007"
+name: "Password Policy Minimum 14 Characters"
+level: 1
+pillar: "iam"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  The IAM account password policy must require a minimum length of 14 characters and enforce
+  complexity requirements: at least one uppercase letter, one lowercase letter, one number,
+  and one non-alphanumeric character. Passwords must expire after a maximum of 90 days, and
+  the policy must prevent reuse of the last 24 passwords. Apply this policy via the
+  aws iam update-account-password-policy CLI command and validate with the AWS Config rule
+  'iam-password-policy'.
+
+risk: >
+  Short or simple passwords are vulnerable to brute-force and dictionary attacks, especially
+  when exposed through credential stuffing lists from third-party breaches where users reuse
+  passwords. While MFA (csmm-iam-001) is the primary defense for console access, a strong
+  password policy provides defense in depth for scenarios where MFA enforcement has gaps,
+  such as newly created users before MFA enrollment completes.
+
+verification:
+  - "Run: aws iam get-account-password-policy and verify MinimumPasswordLength >= 14, RequireUppercaseCharacters: true, RequireLowercaseCharacters: true, RequireNumbers: true, RequireSymbols: true, MaxPasswordAge <= 90, PasswordReusePrevention >= 24."
+  - "Confirm AWS Config rule 'iam-password-policy' is ENABLED and reports COMPLIANT."
+  - "Attempt to set a test IAM user password shorter than 14 characters via the CLI — the API call should return a PasswordPolicyViolation error."
+  - "Verify the password policy applies to all IAM users in the account including any service or automation accounts with console access."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.8"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-5(1)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html"
+  - "https://docs.aws.amazon.com/cli/latest/reference/iam/update-account-password-policy.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/iam-password-policy.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-10"

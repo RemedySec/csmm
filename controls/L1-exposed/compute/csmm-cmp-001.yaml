@@ -1,0 +1,45 @@
+id: "csmm-cmp-001"
+name: "EBS Encryption at Rest"
+level: 1
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All EBS volumes attached to EC2 instances must be encrypted at rest, including root volumes,
+  data volumes, and any volumes created from unencrypted snapshots (which must be re-encrypted
+  during copy). For new deployments, enable EBS default encryption at the account level
+  (see csmm-str-007). For existing unencrypted volumes, create an encrypted snapshot copy and
+  replace the volume. Enforce per-volume compliance via AWS Config rule
+  'encrypted-volumes'. Customer-managed KMS keys are required for regulated workloads.
+
+risk: >
+  Unencrypted EBS volumes can be copied into a snapshot and shared across AWS accounts.
+  If a snapshot of an unencrypted root or data volume is accidentally made public or shared
+  with an unintended account, the full contents of the volume — including operating system
+  files, application binaries, environment variables, and data files — are immediately
+  accessible to the recipient without any key. This risk is compounded in environments where
+  snapshot creation is automated for backup purposes.
+
+verification:
+  - "Run: aws ec2 describe-volumes | jq '[.Volumes[] | select(.Encrypted == false)] | length' — expected 0."
+  - "Confirm AWS Config rule 'encrypted-volumes' is ENABLED and reports COMPLIANT across all regions."
+  - "For regulated workloads, verify: aws ec2 describe-volumes | jq '[.Volumes[] | select(.KmsKeyId | contains(\"alias/aws/ebs\"))] | length' — expected 0 (no volumes using the default AWS-managed key)."
+  - "Confirm that EC2 launch templates and Auto Scaling Group configurations explicitly set Encrypted: true on all BlockDeviceMappings, preventing any unencrypted volume from being launched."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.2.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encrypt-unencrypted"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/encrypted-volumes.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-3"

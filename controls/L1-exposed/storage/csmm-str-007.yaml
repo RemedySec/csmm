@@ -1,0 +1,44 @@
+id: "csmm-str-007"
+name: "EBS Default Encryption Enabled"
+level: 1
+pillar: "storage"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Enable EBS default encryption at the AWS account and region level so that all newly created
+  EBS volumes and snapshots are automatically encrypted using a KMS key. Enable per region
+  via aws ec2 enable-ebs-encryption-by-default. For regulated workloads, configure a
+  customer-managed KMS key as the default: aws ec2 modify-ebs-default-kms-key-id --kms-key-id
+  <cmk-arn>. Enforce via AWS Config rule 'ec2-ebs-encryption-by-default'.
+
+risk: >
+  Unencrypted EBS volumes and snapshots expose instance disk data if snapshots are shared
+  accidentally or accessed through permissions misconfiguration. EBS snapshots can be copied
+  across accounts, and an unencrypted snapshot that is briefly set to public or shared with
+  an unintended account exposes all data stored on that volume. Default encryption ensures
+  that volumes created by automation, IaC, or human operators are encrypted without requiring
+  explicit configuration at the resource level.
+
+verification:
+  - "Run in each active region: aws ec2 get-ebs-encryption-by-default | jq '.EbsEncryptionByDefault' — expected true."
+  - "Run: aws ec2 get-ebs-default-kms-key-id | jq '.KmsKeyId' — for regulated workloads, this must reference a customer-managed key ARN, not the alias/aws/ebs default."
+  - "Confirm AWS Config rule 'ec2-ebs-encryption-by-default' is ENABLED and reports COMPLIANT in all active regions."
+  - "Launch a test EC2 instance without specifying an encryption parameter and verify the root volume is encrypted: aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<id> | jq '.Volumes[].Encrypted'."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.2.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default"
+  - "https://docs.aws.amazon.com/cli/latest/reference/ec2/enable-ebs-encryption-by-default.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/ec2-ebs-encryption-by-default.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-7"

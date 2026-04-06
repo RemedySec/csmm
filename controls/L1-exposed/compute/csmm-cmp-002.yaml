@@ -1,0 +1,44 @@
+id: "csmm-cmp-002"
+name: "No Public IPs on EC2 Unless Explicitly Required"
+level: 1
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  EC2 instances must not be assigned public IPv4 addresses unless there is a documented
+  architectural requirement (e.g., a NAT instance, a VPN endpoint). All internet-facing
+  workloads must be fronted by an ALB, NLB, CloudFront, or API Gateway; the underlying EC2
+  instances must sit in private subnets. Enforce at the subnet level by setting
+  MapPublicIpOnLaunch to false (see csmm-net-004) and by explicitly setting
+  AssociatePublicIpAddress: false in all EC2 launch templates, Auto Scaling Groups, and
+  CloudFormation/Terraform resource definitions.
+
+risk: >
+  An EC2 instance with a public IP is directly reachable from the internet on all open ports,
+  even if a load balancer is in front of it. This allows attackers to bypass WAF rules,
+  rate limiting, and DDoS protections applied at the ALB/CloudFront layer by targeting the
+  instance IP directly. Publicly reachable instances also expose all services running on
+  non-standard ports — monitoring agents, debugging endpoints, metadata proxies — that are
+  not intended to be internet-accessible.
+
+verification:
+  - "Run: aws ec2 describe-instances | jq '[.Reservations[].Instances[] | select(.PublicIpAddress != null)] | length' — document and justify all non-zero results."
+  - "For any instance with a public IP, verify it is explicitly listed in a network architecture exception register with an approved business justification."
+  - "Confirm all EC2 launch templates have NetworkInterfaces[].AssociatePublicIpAddress set to false."
+  - "Verify that security groups attached to instances with public IPs do not allow unrestricted inbound access on application ports — traffic must originate only from the load balancer security group."
+  - "Confirm VPC Flow Logs are enabled for the VPC containing any instance with a public IP to provide traffic visibility."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-9"

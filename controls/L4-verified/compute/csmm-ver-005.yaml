@@ -1,0 +1,37 @@
+id: "csmm-ver-005"
+name: "Shadow IT Tracked"
+level: 4
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All AWS accounts in the organization must be continuously scanned for resources
+  not registered in the approved asset inventory or not managed by IaC. AWS Config
+  with a custom aggregator, AWS Resource Explorer, or a third-party CSPM tool must
+  identify untagged or untracked resources. Any resource missing required ownership
+  tags must be flagged and its account owner notified within 48 hours of creation.
+
+risk: >
+  Unmanaged resources created outside approved change processes bypass security
+  controls, monitoring pipelines, and backup policies that are applied through
+  standard IaC workflows. Shadow infrastructure commonly lacks encryption, logging,
+  access restrictions, and patching schedules, and its existence is often discovered
+  only during incident response when it is too late to prevent data exposure.
+
+verification:
+  - "Run AWS Resource Explorer or Config aggregator query to identify resources missing required tags such as Owner, Environment, and ManagedBy"
+  - "Cross-reference discovered resources against the Terraform state inventory to identify resources with no IaC counterpart"
+  - "Confirm an alerting rule exists in AWS Config or the CSPM tool that fires within 48 hours of a new untagged resource creation"
+  - "Review the last 30 days of shadow IT alerts and confirm each was actioned with either tag remediation or resource termination"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "CM-8"
+
+references:
+  - "https://docs.aws.amazon.com/resource-explorer/latest/userguide/getting-started-setting-up.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html"

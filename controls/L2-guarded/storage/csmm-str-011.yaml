@@ -1,0 +1,39 @@
+id: "csmm-str-011"
+name: "RDS Auto Minor Version Upgrade"
+level: 2
+pillar: "storage"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  All RDS DB instances must have the AutoMinorVersionUpgrade flag set to true,
+  ensuring that the database engine is automatically patched to the latest
+  minor version during the configured maintenance window. This applies to all
+  supported engines including MySQL, PostgreSQL, MariaDB, Oracle, and SQL
+  Server where minor version upgrades are available.
+
+risk: >
+  Database engines with unpatched minor versions accumulate publicly disclosed
+  CVEs over time, many of which include remote code execution, privilege
+  escalation, or denial-of-service vulnerabilities. Unpatched databases are
+  a high-value target because they often hold the most sensitive data in the
+  architecture; attackers with network access to the database endpoint can
+  exploit these CVEs to gain unauthorized access without needing application
+  credentials.
+
+verification:
+  - "Run aws rds describe-db-instances across all regions and flag any instance where AutoMinorVersionUpgrade is false."
+  - "Deploy AWS Config rule rds-automatic-minor-version-upgrade-enabled and verify compliance across all target accounts."
+  - "Review the maintenance window configuration to ensure it falls within an acceptable low-traffic period and is not indefinitely deferred."
+  - "Confirm that minor version upgrade activity appears in RDS event logs after each maintenance window to verify upgrades are actually being applied."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "SI-2"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Upgrading.html"
+  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/rds-automatic-minor-version-upgrade-enabled.html"

@@ -1,0 +1,45 @@
+id: "csmm-net-002"
+name: "No RDP (3389) Open to 0.0.0.0/0"
+level: 1
+pillar: "networking"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  No security group may have an inbound rule permitting TCP port 3389 (RDP) from 0.0.0.0/0
+  or ::/0. Windows instance access must be provided exclusively via AWS Systems Manager
+  Session Manager (RDP over Session Manager), AWS Managed Microsoft AD with VPN-scoped
+  access, or a dedicated jump server in a restricted security group. Enforce via AWS Config
+  rule 'restricted-common-ports' and auto-remediate using AWS-DisablePublicAccessForSecurityGroup.
+
+risk: >
+  RDP brute-force attacks are fully automated and operate at global internet scale. Threat
+  actors use credential stuffing tools and leaked password lists to attempt thousands of
+  login combinations per minute against any publicly reachable port 3389. Ransomware groups
+  specifically target exposed RDP as a primary initial access vector. A single successful
+  RDP login provides full interactive GUI access to the Windows host and its instance profile
+  credentials. Unlike SSH, RDP sessions can be harder to audit without additional tooling.
+
+verification:
+  - "Run: aws ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=3389 Name=ip-permission.cidr,Values=0.0.0.0/0 | jq '.SecurityGroups | length' — expected 0."
+  - "Repeat the check for IPv6: --filters Name=ip-permission.ipv6-cidr,Values=::/0."
+  - "Confirm AWS Config rule 'restricted-common-ports' includes port 3389 and reports COMPLIANT."
+  - "Verify that SSM Agent is installed and connected on all Windows EC2 instances, and that Session Manager RDP tunneling is configured and tested."
+  - "Confirm GuardDuty finding type 'UnauthorizedAccess:EC2/RDPBruteForce' alerting is active and routes to the security operations team."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "5.3"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/restricted-common-ports.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-remote-desktop-port-forwarding"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/connecting_to_windows_instance.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-14"

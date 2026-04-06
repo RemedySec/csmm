@@ -1,0 +1,38 @@
+id: "csmm-aut-002"
+name: "Policy Drift Auto-Reverted"
+level: 5
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Any unauthorized change to a managed IAM policy, SCP, or permission boundary
+  must be automatically detected and reverted to the last known-good IaC-managed
+  state. Detection must occur via CloudTrail event monitoring using EventBridge
+  rules watching for iam:PutRolePolicy, iam:AttachRolePolicy, iam:CreatePolicyVersion,
+  and related events. The revert action must execute within 5 minutes of the
+  detected change and the triggering principal must be immediately notified.
+
+risk: >
+  Unauthorized IAM policy modifications — whether from a compromised credential,
+  a developer making a quick console fix, or a malicious insider — persist silently
+  until the next scheduled audit. Even brief windows of elevated permissions can
+  be exploited to create backdoor access, exfiltrate data, or establish persistence
+  that survives the policy revert itself if not paired with a session revocation step.
+
+verification:
+  - "Confirm EventBridge rules exist matching iam:PutRolePolicy, iam:AttachRolePolicy, and iam:CreatePolicyVersion events for production roles"
+  - "Trigger a test unauthorized policy change and confirm the revert Lambda executes and restores the prior policy version within 5 minutes"
+  - "Review the revert Lambda execution logs to confirm before/after policy documents are captured in the audit log"
+  - "Confirm the triggering IAM principal's active sessions are invalidated as part of the revert workflow"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "CM-3"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_modify.html"
+  - "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cloudtrail.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_control-access_disable-perms.html"

@@ -1,0 +1,46 @@
+id: "csmm-net-001"
+name: "No SSH (22) Open to 0.0.0.0/0"
+level: 1
+pillar: "networking"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  No security group in any VPC may have an inbound rule permitting TCP port 22 (SSH) from
+  0.0.0.0/0 or ::/0. SSH access to EC2 instances must be routed exclusively through AWS
+  Systems Manager Session Manager, a bastion host in a restricted subnet, or a VPN/Direct
+  Connect endpoint. Enforce via AWS Config rule 'restricted-ssh' and remediate automatically
+  using AWS Config Auto Remediation with the AWS-DisablePublicAccessForSecurityGroup SSM
+  document.
+
+risk: >
+  Publicly accessible SSH is the single most exploited attack vector in cloud environments.
+  Automated scanners continuously probe the entire IPv4 address space for open port 22 within
+  minutes of an instance launching. Successful brute-force or exploitation of SSH grants
+  shell access to the underlying instance, from which an attacker can harvest IAM instance
+  profile credentials, move laterally within the VPC, and exfiltrate data. Session Manager
+  eliminates the need for any inbound port exposure.
+
+verification:
+  - "Run: aws ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=22 Name=ip-permission.cidr,Values=0.0.0.0/0 | jq '.SecurityGroups | length' — expected 0."
+  - "Repeat the check for IPv6: --filters Name=ip-permission.ipv6-cidr,Values=::/0."
+  - "Confirm AWS Config rule 'restricted-ssh' is ENABLED and reports COMPLIANT across all regions."
+  - "Verify that at least one Systems Manager endpoint (or SSM Agent with internet access) is available in each VPC used for EC2 access, confirming Session Manager connectivity."
+  - "Confirm a preventive SCP or AWS Config auto-remediation removes any newly created SSH-open security group rule within 5 minutes."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "5.2"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/restricted-ssh.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/authorizing-access-to-an-instance.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-13"

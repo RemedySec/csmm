@@ -1,0 +1,38 @@
+id: "csmm-net-010"
+name: "NACL No Unrestricted Egress"
+level: 2
+pillar: "networking"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  Network ACL outbound rules must not permit unrestricted egress to all
+  destinations (0.0.0.0/0 or ::/0) on all ports (0-65535). Outbound traffic
+  should be restricted to explicitly approved destination CIDR ranges and port
+  ranges necessary for the workload, with a default DENY rule at the end of the
+  rule set to block all other outbound traffic.
+
+risk: >
+  Unrestricted outbound network access enables data exfiltration via any
+  protocol and any destination, which is a primary technique used by attackers
+  and malicious insiders after gaining access to a resource. It also allows
+  compromised instances to participate in outbound attack campaigns or
+  communicate with command-and-control infrastructure without triggering
+  port-specific network controls, making containment significantly harder.
+
+verification:
+  - "Inspect all NACL outbound rules via aws ec2 describe-network-acls and flag any ALLOW rule with destination 0.0.0.0/0 or ::/0 covering port range 0-65535."
+  - "Confirm each NACL has a final DENY ALL rule (rule number 32767 or equivalent) and that ALLOW rules specify narrow port ranges."
+  - "Cross-reference with VPC Flow Logs to identify any unexpected outbound traffic patterns that suggest overly permissive rules in practice."
+  - "Review NACLs for all subnets, including private subnets, as egress restrictions are equally important for internal workloads."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html#VPC_Security_Comparison"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-recommended-nacl-rules.html"
