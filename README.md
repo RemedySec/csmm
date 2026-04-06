@@ -2,13 +2,14 @@
 
 # Cloud Security Maturity Model (CSMM)
 
-DORA metrics for cloud security. One score, four pillars, five levels.
+DORA metrics for cloud security. One score, five pillars, five levels.
 
 ```
 L1 ████████████████████░ 82%
 L2 █████████████░░░░░░░ 64%
 L3 ████████░░░░░░░░░░░░ 41%
 L4 ░░░░░░░░░░░░░░░░░░░░ (locked — reach 80% on L3 first)
+L5 ░░░░░░░░░░░░░░░░░░░░ (locked — reach 80% on L4 first)
 Overall: Level 2 Guarded — 58/100
 ```
 
@@ -34,14 +35,15 @@ Levels are **gated** — you must reach 80% on a level before the next unlocks. 
 
 ---
 
-## The 4 Pillars
+## The 5 Pillars
 
 | Pillar | Weight | Rationale |
 |---|---|---|
-| IAM | 35% | Most breaches start here |
-| Networking | 25% | Exposure surface |
+| IAM | 30% | Most breaches start here |
+| Networking | 20% | Exposure surface |
 | Storage | 20% | Data protection |
-| Compute | 20% | Workload security |
+| Compute | 15% | Workload security |
+| Monitoring | 15% | Detection and response |
 
 ---
 
@@ -69,7 +71,6 @@ Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](sel
 | Open source | No (free PDF) | No (AWS-owned) | Yes | Partial | Yes (Apache 2.0) |
 | Progression path | No | Yes | No | No | Yes (leveled) |
 | Community-owned | No | No | No | Partial | Yes |
-| Automated tooling | Prowler/ScoutSuite | Prowler | Various | Self | RemedySec |
 
 ---
 

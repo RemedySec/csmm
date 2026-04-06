@@ -1,0 +1,42 @@
+id: "csmm-mon-013"
+name: "CloudWatch Alarm for NACL Changes"
+level: 3
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  A CloudWatch metric filter and alarm must detect modifications to Network Access
+  Control Lists, including CreateNetworkAcl, CreateNetworkAclEntry, DeleteNetworkAcl,
+  DeleteNetworkAclEntry, ReplaceNetworkAclEntry, and ReplaceNetworkAclAssociation
+  events. Network ACL changes affect subnet-level stateless traffic filtering and
+  must be tracked for unauthorized modifications.
+
+risk: >
+  Unauthorized NACL changes can bypass security group restrictions by permitting
+  traffic at the subnet level that group-level rules are intended to block, or
+  can open subnets to unexpected traffic patterns. Because NACLs are stateless
+  and evaluate rules in numeric order, a single inserted allow rule with a low
+  rule number can override all subsequent deny rules.
+
+verification:
+  - "Verify the metric filter covers CreateNetworkAcl, DeleteNetworkAcl, ReplaceNetworkAclEntry, and ReplaceNetworkAclAssociation: aws logs describe-metric-filters --log-group-name <trail-log-group>"
+  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
+  - "Verify an SNS action is attached with confirmed subscriptions"
+  - "Review current NACL rules for all VPCs: aws ec2 describe-network-acls and audit for any ALLOW rules broader than intended"
+  - "Cross-check with VPC Flow Logs to identify traffic patterns that may indicate NACL misconfigurations are being exploited"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.11"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-11"

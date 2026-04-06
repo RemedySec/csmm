@@ -1,0 +1,42 @@
+id: "csmm-mon-016"
+name: "CloudWatch Alarm for Config Configuration Changes"
+level: 3
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  A CloudWatch metric filter and alarm must detect AWS Config service changes,
+  including StopConfigurationRecorder, DeleteDeliveryChannel, PutDeliveryChannel,
+  and PutConfigurationRecorder events. AWS Config provides continuous resource
+  configuration monitoring, and modification of its configuration undermines
+  the organization's compliance visibility and change detection capability.
+
+risk: >
+  Disabling or modifying AWS Config removes the ability to detect resource
+  configuration drift and generates gaps in the compliance audit record.
+  Attackers routinely disable Config as an early step after gaining privileged
+  access, allowing them to make configuration changes without triggering
+  Config rules or generating a complete configuration history for investigators.
+
+verification:
+  - "Verify the metric filter covers StopConfigurationRecorder, DeleteDeliveryChannel, and PutConfigurationRecorder: aws logs describe-metric-filters --log-group-name <trail-log-group>"
+  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
+  - "Verify an SNS action is attached with confirmed subscriptions"
+  - "Confirm Config recorder is currently active in all regions: aws configservice describe-configuration-recorder-status --query 'ConfigurationRecordersStatus[].recording'"
+  - "Verify the Config delivery channel is configured and functioning: aws configservice describe-delivery-channel-status and confirm lastStatus is SUCCESS"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.9"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "CM-3"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/stop-start-recorder.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-9"

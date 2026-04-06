@@ -148,7 +148,24 @@ Critical controls (marked ⚠️ Critical) carry extra weight in the weighted sc
 
 **Level 2 Governance score: ___ / 7**
 
-**Level 2 Total: ___ / 40 = ___%**
+### Monitoring
+
+- [ ] AWS Security Hub enabled (csmm-mon-001) ⚠️ Critical
+- [ ] CloudWatch alarm for unauthorized API calls (csmm-mon-002)
+- [ ] CloudWatch alarm for root account usage (csmm-mon-003) ⚠️ Critical
+- [ ] CloudWatch alarm for IAM policy changes (csmm-mon-004)
+- [ ] CloudWatch alarm for CloudTrail config changes (csmm-mon-005)
+- [ ] CloudWatch alarm for S3 bucket policy changes (csmm-mon-006)
+- [ ] CloudWatch alarm for security group changes (csmm-mon-007)
+- [ ] CloudWatch alarm for VPC changes (csmm-mon-008)
+- [ ] CloudWatch alarm for Organizations changes (csmm-mon-009)
+- [ ] CloudWatch alarm for console sign-in without MFA (csmm-mon-010)
+- [ ] CloudWatch alarm for console authentication failures (csmm-mon-011)
+- [ ] CloudWatch alarm for CMK disable/scheduled deletion (csmm-mon-012)
+
+**Level 2 Monitoring score: ___ / 12**
+
+**Level 2 Total: ___ / 52 = ___%**
 
 ---
 
@@ -215,7 +232,16 @@ Critical controls (marked ⚠️ Critical) carry extra weight in the weighted sc
 
 **Level 3 Governance score: ___ / 6**
 
-**Level 3 Total: ___ / 34 = ___%**
+### Monitoring
+
+- [ ] CloudWatch alarm for NACL changes (csmm-mon-013)
+- [ ] CloudWatch alarm for network gateway changes (csmm-mon-014)
+- [ ] CloudWatch alarm for route table changes (csmm-mon-015)
+- [ ] CloudWatch alarm for Config configuration changes (csmm-mon-016)
+
+**Level 3 Monitoring score: ___ / 4**
+
+**Level 3 Total: ___ / 38 = ___%**
 
 ---
 
@@ -295,11 +321,11 @@ Critical controls (marked ⚠️ Critical) carry extra weight in the weighted sc
 | Level | Checked | Total | Raw % | ≥80%? |
 |-------|---------|-------|-------|-------|
 | L1 — Exposed | | 27 | | ☐ |
-| L2 — Guarded | | 40 | | ☐ |
-| L3 — Hardened | | 34 | | ☐ |
+| L2 — Guarded | | 52 | | ☐ |
+| L3 — Hardened | | 38 | | ☐ |
 | L4 — Verified | | 17 | | ☐ |
 | L5 — Autonomous | | 10 | | ☐ |
-| **Total** | | **128** | | |
+| **Total** | | **144** | | |
 
 ### Severity-Weighted Score
 
@@ -314,15 +340,15 @@ Standard controls checked:  ___ × 1 = ___
 ─────────────────────────────────────────
 Weighted numerator:               ___
 
-Total critical controls:    ___ × 2 = ___  (26 critical × 2 = 52)
-Total standard controls:    ___ × 1 = ___  (102 standard × 1 = 102)
+Total critical controls:    ___ × 2 = ___  (28 critical × 2 = 56)
+Total standard controls:    ___ × 1 = ___  (116 standard × 1 = 116)
 ─────────────────────────────────────────
-Weighted denominator:             154
+Weighted denominator:             172
 
-Weighted Score = ___ / 154 = ___%
+Weighted Score = ___ / 172 = ___%
 ```
 
-> There are **26 critical controls** and **102 standard controls** across all levels, for a weighted denominator of **154**.
+> There are **28 critical controls** and **116 standard controls** across all levels, for a weighted denominator of **172**.
 
 ### Effective Maturity Level
 

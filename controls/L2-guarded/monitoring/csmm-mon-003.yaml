@@ -1,0 +1,41 @@
+id: "csmm-mon-003"
+name: "CloudWatch Alarm for Root Account Usage"
+level: 2
+pillar: "monitoring"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  A CloudWatch metric filter and alarm must detect any usage of the root account
+  by filtering CloudTrail logs for events where userIdentity.type is Root and
+  the event source is not sts.amazonaws.com. All root API activity must trigger
+  an immediate SNS notification to the security team.
+
+risk: >
+  Root account usage outside of initial setup or break-glass scenarios indicates
+  either a compromised root credential or a process failure where teams are
+  bypassing standard IAM controls. Delayed detection allows unrestricted access
+  to persist, as root cannot be denied by any SCP or IAM policy, enabling
+  complete account takeover without further escalation.
+
+verification:
+  - "Verify the metric filter pattern matches root usage: aws logs describe-metric-filters and confirm filter includes userIdentity.type = Root"
+  - "Confirm the alarm evaluates over a 1-period window with threshold >= 1 and treatment of missing data as notBreaching"
+  - "Verify an SNS action is attached: aws cloudwatch describe-alarm-history --alarm-name <alarm-name>"
+  - "Confirm SNS topic subscriptions are active and deliver to a monitored endpoint (email, PagerDuty, etc.)"
+  - "Review CloudTrail event history for any root usage in the past 90 days: aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=root"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.3"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "AU-6"
+
+references:
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-1"

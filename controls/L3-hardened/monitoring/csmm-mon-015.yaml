@@ -1,0 +1,42 @@
+id: "csmm-mon-015"
+name: "CloudWatch Alarm for Route Table Changes"
+level: 3
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  A CloudWatch metric filter and alarm must detect route table changes, including
+  CreateRoute, DeleteRoute, ReplaceRoute, CreateRouteTable, DeleteRouteTable,
+  AssociateRouteTable, and DisassociateRouteTable events. Route modifications
+  affect traffic flow between subnets, VPCs, and external networks, and must be
+  monitored to detect unauthorized traffic redirection.
+
+risk: >
+  Unauthorized route changes can redirect traffic through attacker-controlled
+  paths, enabling man-in-the-middle interception of internal communications,
+  or can create unexpected internet egress points that facilitate data exfiltration
+  from environments intended to be network-isolated. Route manipulation is a
+  common technique used after initial access to bypass network controls.
+
+verification:
+  - "Verify the metric filter covers CreateRoute, DeleteRoute, ReplaceRoute, and AssociateRouteTable: aws logs describe-metric-filters --log-group-name <trail-log-group>"
+  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
+  - "Verify an SNS action is attached with confirmed subscriptions"
+  - "Review all route tables and their routes: aws ec2 describe-route-tables and audit for unexpected 0.0.0.0/0 routes pointing to internet gateways or unexpected targets"
+  - "Cross-check with VPC Flow Logs for traffic to unexpected destinations that could indicate route manipulation"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.13"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-13"

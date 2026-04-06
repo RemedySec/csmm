@@ -1,0 +1,42 @@
+id: "csmm-mon-014"
+name: "CloudWatch Alarm for Network Gateway Changes"
+level: 3
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  A CloudWatch metric filter and alarm must detect network gateway changes,
+  including CreateInternetGateway, DeleteInternetGateway, AttachInternetGateway,
+  DetachInternetGateway, CreateNatGateway, and DeleteNatGateway events. Internet
+  gateway attachment creates direct internet exposure for a VPC and must be
+  tracked as a significant network perimeter event.
+
+risk: >
+  Unauthorized internet gateway creation or attachment exposes private subnets
+  to inbound internet traffic, bypassing network perimeter controls and potentially
+  making previously internal services reachable from the public internet. This
+  can occur through misconfiguration or as a deliberate attacker action to
+  establish persistent access or exfiltration paths.
+
+verification:
+  - "Verify the metric filter covers CreateInternetGateway, AttachInternetGateway, DetachInternetGateway, and DeleteInternetGateway: aws logs describe-metric-filters --log-group-name <trail-log-group>"
+  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
+  - "Verify an SNS action is attached with confirmed subscriptions"
+  - "Review all internet gateways and their VPC attachments: aws ec2 describe-internet-gateways and confirm each attachment is expected"
+  - "Cross-check with AWS Config rule internet-gateway-authorized-vpc-only if applicable"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.12"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-12"

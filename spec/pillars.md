@@ -8,20 +8,21 @@
 
 ## Overview
 
-CSMM organizes all controls into four security pillars. Each pillar represents a distinct attack surface or protection domain within an AWS environment. Pillar weights reflect the relative contribution of each domain to overall security risk, informed by historical cloud breach data and the attack patterns most commonly observed in AWS environments.
+CSMM organizes all controls into five security pillars. Each pillar represents a distinct attack surface or protection domain within an AWS environment. Pillar weights reflect the relative contribution of each domain to overall security risk, informed by historical cloud breach data and the attack patterns most commonly observed in AWS environments.
 
 | Pillar      | Weight | Rationale Summary |
 |-------------|--------|-------------------|
-| IAM         | 35%    | Most breaches originate from identity compromise |
-| Networking  | 25%    | Exposure surface determines reachability of assets |
+| IAM         | 30%    | Most breaches originate from identity compromise |
+| Networking  | 20%    | Exposure surface determines reachability of assets |
 | Storage     | 20%    | Data protection is the primary security outcome |
-| Compute     | 20%    | Workloads are the primary target of post-compromise activity |
+| Compute     | 15%    | Workloads are the primary target of post-compromise activity |
+| Monitoring  | 15%    | Detection reduces mean time to detect and respond to breaches |
 
 Pillar weights sum to 100%. They are applied in the overall scoring formula alongside level weights. See [scoring.md](scoring.md) for the full formula.
 
 ---
 
-## IAM — Identity and Access Management (35%)
+## IAM — Identity and Access Management (30%)
 
 ### What It Covers
 
@@ -38,7 +39,7 @@ The IAM pillar encompasses all controls related to authentication, authorization
 - Secrets and credential management
 - IAM Access Analyzer findings
 
-### Why IAM is Weighted Most Heavily (35%)
+### Why IAM is Weighted Most Heavily (30%)
 
 Identity is the primary attack vector in cloud environments. Unlike traditional infrastructure where network perimeter controls could limit attacker reach, AWS is API-driven: possession of valid credentials is functionally equivalent to physical access to a resource. The consequences of identity compromise cascade across all other pillars — a stolen IAM role with broad permissions can exfiltrate data, modify network configuration, or destroy compute resources regardless of how well those resources are hardened.
 
@@ -48,7 +49,7 @@ Additionally, IAM controls provide defense in depth that benefits all other pill
 
 ---
 
-## Networking — Network Security (25%)
+## Networking — Network Security (20%)
 
 ### What It Covers
 
@@ -65,7 +66,7 @@ The Networking pillar encompasses all controls related to network-level exposure
 - WAF and DDoS protection (Shield, CloudFront)
 - DNS security
 
-### Why Networking is Weighted 25%
+### Why Networking is Weighted 20%
 
 Networking controls determine which assets are reachable and from where. An internet-exposed service that should be internal, an overly permissive security group, or an unencrypted connection are all networking failures that directly expand the attack surface available to an adversary.
 
@@ -101,7 +102,7 @@ Storage is also where compliance obligations are most concentrated — GDPR, HIP
 
 ---
 
-## Compute — Workload Security (20%)
+## Compute — Workload Security (15%)
 
 ### What It Covers
 
@@ -123,9 +124,37 @@ The Compute pillar encompasses all controls related to the security of workloads
 
 Compute resources are the primary target of post-compromise activity. Once an attacker has gained initial access — typically through an IAM or networking failure — they use compute resources to execute code, pivot laterally, exfiltrate data, and establish persistence. Securing compute reduces the impact of breaches that penetrate the outer layers.
 
-Compute and Storage are weighted equally at 20% because they represent complementary protections: compute hardening limits what an attacker can do from within the environment, while storage protection limits the value of what they can take from it.
+Compute and Monitoring are weighted equally at 15% because they represent complementary protections: compute hardening limits what an attacker can do from within the environment, while monitoring ensures that when those controls are bypassed, the organization knows about it quickly.
 
 The compute pillar also hosts a disproportionate share of L4 and L5 controls (IaC governance, drift detection, automation) because compute infrastructure is where DevSecOps tooling has the most natural integration points.
+
+---
+
+## Monitoring — Detection and Response (15%)
+
+### What It Covers
+
+The Monitoring pillar encompasses all controls related to threat detection, event alerting, and security observability within AWS environments. This includes:
+
+- CloudWatch metric filters and alarms for security-critical events
+- AWS Security Hub enablement and standards
+- GuardDuty threat detection and protection plans
+- CloudWatch Logs centralization and analysis
+- SNS notifications for security events
+- Unauthorized API call detection
+- Root account usage monitoring
+- IAM policy change tracking
+- Network configuration change monitoring
+- S3 bucket policy change detection
+- VPC and security group change alerting
+
+### Why Monitoring is Weighted 15%
+
+Detection is the bridge between prevention and response. Without monitoring, an organization cannot know when its preventive controls have failed or when an attacker has bypassed them. Monitoring transforms a security posture from "we hope our controls are holding" to "we know when they're not."
+
+Monitoring is weighted at 15% because it is a force multiplier for every other pillar rather than a standalone protection layer. Strong monitoring cannot prevent a breach, but it dramatically reduces the time to detect and respond to one. Mean Time to Detect (MTTD) is one of the strongest predictors of breach cost, and monitoring controls directly reduce it.
+
+The CIS AWS Foundations Benchmark dedicates an entire section (Section 4 — Monitoring, 16 controls) to CloudWatch metric filters and alarms, reflecting the consensus that detection deserves dedicated focus. CSMM elevates these from being distributed across other pillars into a first-class pillar to ensure they receive proportional attention during assessment and remediation.
 
 ---
 
@@ -148,8 +177,9 @@ Examples of cross-cutting control assignments:
 | VPC Flow Logs                        | Networking      | Directly monitors network traffic |
 | CloudTrail (log file validation)     | Compute         | Primarily a platform governance control |
 | S3 server access logging             | Storage         | Directly monitors data store access |
-| Security Hub standard enablement    | Compute         | Platform-level aggregation control |
+| Security Hub standard enablement     | Monitoring      | Platform-level detection aggregation control |
 | Config enabled in all regions        | Compute         | Platform-level configuration monitoring |
+| GuardDuty threat detection           | Monitoring      | Directly provides threat detection and alerting |
 
 These assignments are intentional design decisions, not categorization errors. If a control's placement seems counterintuitive, the `description` and `risk` fields in the control YAML explain the rationale.
 
@@ -157,14 +187,16 @@ These assignments are intentional design decisions, not categorization errors. I
 
 ## Pillar Weight Rationale Summary
 
-The 35/25/20/20 split reflects the following principles:
+The 30/20/20/15/15 split reflects the following principles:
 
 1. **Identity is the cloud control plane.** Compromising identity is functionally equivalent to compromising everything. IAM deserves the highest weight.
 
 2. **Network exposure determines reachability.** Without network controls, internet-exposed services are reachable by anyone. Networking deserves meaningful weight but is secondary to identity because network controls can be bypassed by the IAM control plane.
 
-3. **Data protection is the ultimate outcome.** Storage controls ensure that even when other layers fail, data at rest is encrypted and access is logged. Storage and compute share the remaining weight equally.
+3. **Data protection is the ultimate outcome.** Storage controls ensure that even when other layers fail, data at rest is encrypted and access is logged. Storage retains its 20% weight as data exposure remains the most directly visible consequence of a cloud security failure.
 
 4. **Compute hardening limits breach impact.** Secure workloads limit lateral movement and persistence, reducing the damage an attacker can do after gaining initial access.
+
+5. **Monitoring is a force multiplier for all other pillars.** Detection transforms a security posture from reactive to aware. Without monitoring, organizations cannot know when preventive controls have failed. The Monitoring pillar is weighted at 15% — equal to Compute — reflecting the consensus captured in CIS AWS Foundations Benchmark Section 4 that detection controls deserve dedicated, proportional attention.
 
 The weights are reviewed and may be adjusted in future MAJOR versions as cloud breach patterns evolve or as multi-cloud scope is added. Any change to pillar weights constitutes a MAJOR version change under the CSMM versioning policy.

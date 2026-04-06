@@ -14,8 +14,8 @@ CSMM defines five maturity levels (L1–L5). Each level builds on the previous o
 
 | Level | Name       | Approx. Controls | Key Themes |
 |-------|------------|------------------|------------|
-| L1    | Exposed    | ~35              | MFA, root protection, public access blocks, default SG, basic encryption |
-| L2    | Guarded    | ~40              | SCPs, IMDSv2, VPC Flow Logs, CloudTrail, NACLs, TLS, RDS encryption, backups |
+| L1    | Exposed    | ~35              | MFA, root protection, public access blocks, default SG, basic encryption, GuardDuty |
+| L2    | Guarded    | ~40              | SCPs, IMDSv2, VPC Flow Logs, CloudTrail, NACLs, TLS, RDS encryption, backups, CloudWatch alarms, Security Hub |
 | L3    | Hardened   | ~35              | Permission boundaries, ABAC/RBAC, cross-account trust, data perimeters, container security |
 | L4    | Verified   | ~20              | IaC scanning, drift detection, resource-to-source mapping, blast radius, shadow IT |
 | L5    | Autonomous | ~10              | Auto-remediation, self-heal, anomaly response, zero-trust loops |
@@ -48,7 +48,7 @@ L1 controls tend to be binary (enabled/disabled or configured/not configured), v
 | IAM-L1-006   | IAM password policy meets minimum requirements               | medium    |
 | IAM-L1-007   | Access keys rotated within 90 days                           | high      |
 | IAM-L1-008   | Unused IAM credentials deactivated within 90 days            | high      |
-| IAM-L1-009   | GuardDuty enabled in all regions                             | high      |
+| MON-L1-001   | GuardDuty enabled in all regions                             | high      |
 | NET-L1-001   | Default security group in every VPC blocks all traffic       | high      |
 | NET-L1-002   | No security group allows unrestricted SSH (0.0.0.0/0 port 22) | critical |
 | NET-L1-003   | No security group allows unrestricted RDP (0.0.0.0/0 port 3389) | critical |
@@ -108,8 +108,13 @@ L2 controls often require cross-account or organizational coordination (SCPs req
 | COM-L2-003   | AWS Config enabled in all regions                             | high      |
 | COM-L2-004   | CloudTrail enabled across all regions with log file validation | high     |
 | COM-L2-005   | CloudTrail logs delivered to a centralized, restricted S3 bucket | medium  |
-| COM-L2-006   | Security Hub enabled with CIS AWS Foundations Benchmark standard | high   |
-| COM-L2-007   | SNS alerting configured for high-severity GuardDuty findings  | high      |
+| MON-L2-001   | CloudWatch alarm configured for root account usage            | critical  |
+| MON-L2-002   | CloudWatch alarm for unauthorized API calls                   | high      |
+| MON-L2-003   | CloudWatch alarm for IAM policy changes                       | high      |
+| MON-L2-004   | CloudWatch alarm for CloudTrail configuration changes         | high      |
+| MON-L2-005   | Security Hub enabled with CIS AWS Foundations Benchmark standard | high   |
+| MON-L2-006   | SNS alerting configured for high-severity GuardDuty findings  | high      |
+| MON-L2-007   | CloudWatch Logs centralized across all accounts and regions   | medium    |
 
 ### Gating Rule
 
@@ -158,6 +163,10 @@ L3 controls are harder to verify because they often require policy analysis rath
 | COM-L3-004   | No hardcoded credentials in Lambda environment variables or container images | critical |
 | COM-L3-005   | EC2 instances enrolled in Systems Manager Inventory               | medium    |
 | COM-L3-006   | Patch Manager or equivalent used for OS patch compliance          | high      |
+| MON-L3-001   | CloudWatch alarms for network configuration changes (VPC, SG, NACL) | high   |
+| MON-L3-002   | CloudWatch alarm for S3 bucket policy changes                     | high      |
+| MON-L3-003   | GuardDuty S3 Protection and EKS Protection plans enabled          | medium    |
+| MON-L3-004   | Security Hub findings routed to ticketing or SIEM system          | medium    |
 
 ### Gating Rule
 

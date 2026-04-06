@@ -1,0 +1,40 @@
+id: "csmm-mon-001"
+name: "AWS Security Hub Enabled"
+level: 2
+pillar: "monitoring"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Security Hub must be enabled with the CIS AWS Foundations Benchmark standard
+  activated in every region where workloads run. It aggregates findings from
+  GuardDuty, Config, IAM Access Analyzer, and other services into a unified view,
+  providing a single pane of glass for security posture management.
+
+risk: >
+  Without Security Hub, security findings are scattered across individual services
+  with no centralized view, making it impossible to prioritize remediation
+  effectively. Critical findings from GuardDuty or Config may go unnoticed
+  indefinitely, extending the window of exposure for active threats.
+
+verification:
+  - "Run: aws securityhub describe-hub --region <region> and confirm the Hub ARN is returned without error"
+  - "Run: aws securityhub get-enabled-standards and confirm arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark is listed as READY"
+  - "Verify Security Hub is enabled in all active regions: aws ec2 describe-regions --query 'Regions[].RegionName'"
+  - "Confirm auto-enable for new accounts if using AWS Organizations: aws securityhub describe-organization-configuration"
+  - "Check that at least one SNS notification action is configured for HIGH and CRITICAL findings"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.16"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "SI-4"
+
+references:
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-enable.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-cis.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-with-organizations.html"

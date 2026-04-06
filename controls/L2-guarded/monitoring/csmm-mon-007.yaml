@@ -1,0 +1,41 @@
+id: "csmm-mon-007"
+name: "CloudWatch Alarm for Security Group Changes"
+level: 2
+pillar: "monitoring"
+priority: "high"
+severity_weight: 3
+
+description: >
+  A CloudWatch metric filter and alarm must detect changes to security groups,
+  including AuthorizeSecurityGroupIngress, AuthorizeSecurityGroupEgress,
+  RevokeSecurityGroupIngress, RevokeSecurityGroupEgress, CreateSecurityGroup,
+  and DeleteSecurityGroup events. All security group modifications must trigger
+  SNS notification.
+
+risk: >
+  Security group modifications can open network ports to the internet or to
+  overly broad CIDR ranges. Without real-time alerting, misconfigurations
+  introduced during deployments or by operators persist until the next manual
+  review cycle, leaving services exposed for hours or days.
+
+verification:
+  - "Verify the metric filter pattern covers AuthorizeSecurityGroupIngress, RevokeSecurityGroupIngress, CreateSecurityGroup, and DeleteSecurityGroup: aws logs describe-metric-filters --log-group-name <trail-log-group>"
+  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
+  - "Verify an SNS action is attached with confirmed subscriptions"
+  - "Cross-check with AWS Config rule restricted-ssh and restricted-common-ports for complementary detection of overly permissive groups"
+  - "Review Security Hub findings for EC2.18 (Security groups should only allow unrestricted incoming traffic for authorized ports) to identify existing violations"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.10"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+
+references:
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-10"

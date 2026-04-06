@@ -100,10 +100,11 @@ Each pillar carries a weight that reflects its relative importance to overall cl
 
 | Pillar     | Pillar Weight |
 |------------|--------------|
-| IAM        | 0.35         |
-| Networking | 0.25         |
+| IAM        | 0.30         |
+| Networking | 0.20         |
 | Storage    | 0.20         |
-| Compute    | 0.20         |
+| Compute    | 0.15         |
+| Monitoring | 0.15         |
 
 Pillar weights sum to 1.00.
 
@@ -201,80 +202,91 @@ IAM contribution =
   + (0 × L4 weight × IAM pillar weight)     ← gated
   + (0 × L5 weight × IAM pillar weight)     ← gated
 
-= (79.3 × 0.35 × 0.35)
-= 79.3 × 0.1225
-= 9.71
+= (79.3 × 0.35 × 0.30)
+= 79.3 × 0.105
+= 8.33
 ```
 
 ### Full Assessment — All Pillars
 
-The following table summarizes a complete assessment across all four pillars. IAM L1 is the same as the detailed example above. The other pillar values are illustrative.
+The following table summarizes a complete assessment across all five pillars. IAM L1 is the same as the detailed example above. The other pillar values are illustrative.
 
 | Pillar     | Level | Level Score | Gated? | Level Weight | Pillar Weight | Contribution |
 |------------|-------|-------------|--------|--------------|---------------|--------------|
-| IAM        | L1    | 79.3        | No     | 0.35         | 0.35          | 9.71         |
-| IAM        | L2    | 84.2        | Yes    | 0.25         | 0.35          | 0.00         |
-| IAM        | L3    | —           | Yes    | 0.20         | 0.35          | 0.00         |
-| IAM        | L4    | —           | Yes    | 0.12         | 0.35          | 0.00         |
-| IAM        | L5    | —           | Yes    | 0.08         | 0.35          | 0.00         |
-| Networking | L1    | 91.0        | No     | 0.35         | 0.25          | 7.96         |
-| Networking | L2    | 85.0        | No     | 0.25         | 0.25          | 5.31         |
-| Networking | L3    | 72.0        | No     | 0.20         | 0.25          | 3.60         |
-| Networking | L4    | 65.0        | Yes    | 0.12         | 0.25          | 0.00         |
-| Networking | L5    | —           | Yes    | 0.08         | 0.25          | 0.00         |
+| IAM        | L1    | 79.3        | No     | 0.35         | 0.30          | 8.33         |
+| IAM        | L2    | 84.2        | Yes    | 0.25         | 0.30          | 0.00         |
+| IAM        | L3    | —           | Yes    | 0.20         | 0.30          | 0.00         |
+| IAM        | L4    | —           | Yes    | 0.12         | 0.30          | 0.00         |
+| IAM        | L5    | —           | Yes    | 0.08         | 0.30          | 0.00         |
+| Networking | L1    | 91.0        | No     | 0.35         | 0.20          | 6.37         |
+| Networking | L2    | 85.0        | No     | 0.25         | 0.20          | 4.25         |
+| Networking | L3    | 72.0        | No     | 0.20         | 0.20          | 2.88         |
+| Networking | L4    | 65.0        | Yes    | 0.12         | 0.20          | 0.00         |
+| Networking | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
 | Storage    | L1    | 95.0        | No     | 0.35         | 0.20          | 6.65         |
 | Storage    | L2    | 88.0        | No     | 0.25         | 0.20          | 4.40         |
 | Storage    | L3    | 80.0        | No     | 0.20         | 0.20          | 3.20         |
 | Storage    | L4    | 75.0        | Yes    | 0.12         | 0.20          | 0.00         |
 | Storage    | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
-| Compute    | L1    | 88.0        | No     | 0.35         | 0.20          | 6.16         |
-| Compute    | L2    | 83.0        | No     | 0.25         | 0.20          | 4.15         |
-| Compute    | L3    | 78.0        | No     | 0.20         | 0.20          | 3.12         |
-| Compute    | L4    | 60.0        | Yes    | 0.12         | 0.20          | 0.00         |
-| Compute    | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
+| Compute    | L1    | 88.0        | No     | 0.35         | 0.15          | 4.62         |
+| Compute    | L2    | 83.0        | No     | 0.25         | 0.15          | 3.11         |
+| Compute    | L3    | 78.0        | No     | 0.20         | 0.15          | 2.34         |
+| Compute    | L4    | 60.0        | Yes    | 0.12         | 0.15          | 0.00         |
+| Compute    | L5    | —           | Yes    | 0.08         | 0.15          | 0.00         |
+| Monitoring | L1    | 85.0        | No     | 0.35         | 0.15          | 4.46         |
+| Monitoring | L2    | 70.0        | No     | 0.25         | 0.15          | 2.63         |
+| Monitoring | L3    | —           | Yes    | 0.20         | 0.15          | 0.00         |
+| Monitoring | L4    | —           | Yes    | 0.12         | 0.15          | 0.00         |
+| Monitoring | L5    | —           | Yes    | 0.08         | 0.15          | 0.00         |
 
-**Notes on the Networking and Storage gating in this example:**
+**Notes on gating in this example:**
 
+- IAM L1 score (79.3%) is below 80%, so IAM L2 and above are gated out.
 - Networking L3 score (72.0%) is below 80%, so Networking L4 and L5 are gated out.
 - Storage L3 score (80.0%) exactly meets the threshold, so Storage L4 is not gated out due to L3 — however, Storage L4's own score (75.0%) is below 80%, which gates out Storage L5.
 - Compute L3 score (78.0%) is below 80%, so Compute L4 and L5 are gated out.
+- Monitoring L2 score (70.0%) is below 80%, so Monitoring L3 and above are gated out. Monitoring L2 itself still contributes because Monitoring L1 (85.0%) passed the gating threshold.
 
 ### Overall Score Calculation
 
 ```
 overall_score = sum of all non-gated contributions
 
-= 9.71   (IAM L1)
+= 8.33   (IAM L1)
 + 0.00   (IAM L2–L5, gated)
-+ 7.96   (Networking L1)
-+ 5.31   (Networking L2)
-+ 3.60   (Networking L3)
++ 6.37   (Networking L1)
++ 4.25   (Networking L2)
++ 2.88   (Networking L3)
 + 0.00   (Networking L4–L5, gated)
 + 6.65   (Storage L1)
 + 4.40   (Storage L2)
 + 3.20   (Storage L3)
 + 0.00   (Storage L4–L5, gated)
-+ 6.16   (Compute L1)
-+ 4.15   (Compute L2)
-+ 3.12   (Compute L3)
++ 4.62   (Compute L1)
++ 3.11   (Compute L2)
++ 2.34   (Compute L3)
 + 0.00   (Compute L4–L5, gated)
++ 4.46   (Monitoring L1)
++ 2.63   (Monitoring L2)
++ 0.00   (Monitoring L3–L5, gated)
 
-= 54.26
+= 53.24
 ```
 
-**Overall CSMM Score: 54.3 / 100**
+**Overall CSMM Score: 53.2 / 100**
 
 ### Interpretation of Example Score
 
-This score of 54.3 reflects an organization that:
+This score of 53.2 reflects an organization that:
 
 - Has strong L1 performance in Networking (91%), Storage (95%), and Compute (88%) but a critical L1 failure in IAM (79.3%) that gates out all IAM upper levels — pulling the IAM pillar contribution down significantly.
 - Has reasonable L2 and L3 coverage in Networking, Storage, and Compute but not yet achieved the L3 threshold needed to unlock L4 in those pillars.
+- Has basic Monitoring coverage at L1 (85%) but L2 monitoring controls are incomplete (70%), which gates out L3–L5 monitoring.
 - Has not yet implemented meaningful L4 or L5 controls.
 
-The gating impact is substantial: without gating, this organization would have received partial credit for IAM L2–L5 and for the L4 controls attempted in Storage and Compute. Gating removes this credit, producing a score that honestly reflects the weakest link in each chain.
+The gating impact is substantial: without gating, this organization would have received partial credit for IAM L2–L5, for the L4 controls attempted in Storage and Compute, and for higher-level Monitoring controls. Gating removes this credit, producing a score that honestly reflects the weakest link in each chain.
 
-**Priority action for this organization:** Remediate the two failing IAM L1 controls (IAM-L1-005 access key rotation, IAM-L1-007 unused credential cleanup) to raise IAM L1 above 80%. This single action would unlock IAM L2–L5 scoring and could materially improve the overall score.
+**Priority action for this organization:** Remediate the two failing IAM L1 controls (IAM-L1-005 access key rotation, IAM-L1-007 unused credential cleanup) to raise IAM L1 above 80%. This single action would unlock IAM L2–L5 scoring and could materially improve the overall score. Improving Monitoring L2 coverage above 80% is the next highest-leverage action.
 
 ---
 

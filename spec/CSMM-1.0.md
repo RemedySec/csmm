@@ -34,7 +34,7 @@ CSMM is designed to be:
 A control is the atomic unit of assessment in CSMM. Each control describes a specific security behavior or configuration that should be present in a cloud environment. Controls are:
 
 - Assigned to exactly one **Level** (L1–L5).
-- Assigned to exactly one **Pillar** (IAM, Networking, Storage, Compute).
+- Assigned to exactly one **Pillar** (IAM, Networking, Storage, Compute, Monitoring).
 - Weighted by **severity** to reflect the impact of failing that control.
 - Verified through a defined **verification** procedure (console, CLI, policy check, etc.).
 
@@ -54,14 +54,15 @@ CSMM defines five maturity levels (L1–L5). Levels represent increasing sophist
 
 ### 3.3 Pillars
 
-CSMM organizes controls into four security pillars, each representing a distinct attack surface or protection domain:
+CSMM organizes controls into five security pillars, each representing a distinct attack surface or protection domain:
 
 | Pillar      | Weight |
 |-------------|--------|
-| IAM         | 35%    |
-| Networking  | 25%    |
+| IAM         | 30%    |
+| Networking  | 20%    |
 | Storage     | 20%    |
-| Compute     | 20%    |
+| Compute     | 15%    |
+| Monitoring  | 15%    |
 
 ### 3.4 Scoring
 
@@ -77,7 +78,7 @@ Controls are defined in YAML. Each control file (or record within a controls man
 id: string                  # Unique identifier, e.g. IAM-L1-001
 name: string                # Short, human-readable name
 level: integer              # 1–5
-pillar: string              # IAM | Networking | Storage | Compute
+pillar: string              # IAM | Networking | Storage | Compute | Monitoring
 priority: string            # must-have | should-have | nice-to-have
 severity_weight: string     # critical | high | medium | low
 description: string         # What the control requires and why
@@ -100,7 +101,7 @@ references:                 # Optional: external documentation links
 | `id`             | string  | Yes      | Unique control identifier. Format: `{PILLAR}-L{N}-{SEQ}` (e.g. `IAM-L1-001`). |
 | `name`           | string  | Yes      | A concise label (≤80 characters). |
 | `level`          | integer | Yes      | Maturity level this control belongs to (1–5). |
-| `pillar`         | string  | Yes      | One of: `IAM`, `Networking`, `Storage`, `Compute`. |
+| `pillar`         | string  | Yes      | One of: `IAM`, `Networking`, `Storage`, `Compute`, `Monitoring`. |
 | `priority`       | string  | Yes      | `must-have`, `should-have`, or `nice-to-have`. Informational; does not affect scoring. |
 | `severity_weight`| string  | Yes      | `critical`, `high`, `medium`, or `low`. Drives the numeric weight used in scoring. |
 | `description`    | string  | Yes      | Full description of the expected configuration or behavior. |
@@ -119,7 +120,7 @@ references:                 # Optional: external documentation links
 
 L1 covers the security hygiene that every AWS account must have, regardless of workload. Failing L1 controls represents active, exploitable exposure. An organization at L1 or below is vulnerable to trivial attacks including credential compromise, public data exposure, and lateral movement through overly permissive defaults.
 
-Key control themes: MFA enforcement, root account protection, S3 public access blocks, default security group lockdown, basic encryption at rest.
+Key control themes: MFA enforcement, root account protection, S3 public access blocks, default security group lockdown, basic encryption at rest, GuardDuty enablement.
 
 ### L2 — Guarded (~40 controls)
 
@@ -127,7 +128,7 @@ Key control themes: MFA enforcement, root account protection, S3 public access b
 
 L2 introduces organizational controls, visibility mechanisms, and a broader application of encryption. Organizations at L2 have logging in place, basic network segmentation, and preventive guardrails that reduce the blast radius of a compromise.
 
-Key control themes: Service Control Policies (SCPs), IMDSv2 enforcement, VPC Flow Logs, CloudTrail, Network ACLs, TLS enforcement, RDS encryption, automated backups.
+Key control themes: Service Control Policies (SCPs), IMDSv2 enforcement, VPC Flow Logs, CloudTrail, Network ACLs, TLS enforcement, RDS encryption, automated backups, CloudWatch metric alarms for security events, Security Hub enablement.
 
 ### L3 — Hardened (~35 controls)
 
@@ -157,11 +158,11 @@ Key control themes: Automated remediation pipelines, self-healing infrastructure
 
 ## 6. Pillars
 
-### IAM — 35%
+### IAM — 30%
 
 Identity and Access Management is weighted most heavily because the majority of cloud breaches originate from compromised credentials, overly permissive roles, or misconfigured trust relationships. IAM controls span authentication, authorization, delegation, and federation.
 
-### Networking — 25%
+### Networking — 20%
 
 Networking controls govern the exposure surface of cloud workloads. This includes VPC design, security groups, network ACLs, ingress/egress filtering, and private connectivity. Poorly configured networking can expose internal services to the public internet or allow unrestricted lateral movement between accounts.
 
@@ -169,11 +170,15 @@ Networking controls govern the exposure surface of cloud workloads. This include
 
 Storage controls protect data at rest and govern access to data stores including S3, RDS, DynamoDB, EBS, and Secrets Manager. Data exposure via misconfigured storage is one of the most common causes of publicly reported cloud breaches.
 
-### Compute — 20%
+### Compute — 15%
 
 Compute controls cover workload security including EC2 instance configuration, container security, serverless function permissions, and patch management. Compromised compute resources are frequently used as pivot points for broader attacks.
 
-**Note on Governance Controls:** Governance-oriented controls (e.g. CloudTrail, Config, SCPs) are cross-cutting in nature. For scoring purposes, each such control is mapped to the pillar most directly protected by that control (e.g. SCPs → IAM, VPC Flow Logs → Networking).
+### Monitoring — 15%
+
+Monitoring controls cover threat detection, security event alerting, and observability. This includes CloudWatch metric filters and alarms for critical security events, Security Hub standards enablement, GuardDuty threat detection, and SNS notification pipelines. Without monitoring, organizations cannot detect when preventive controls fail or when attackers bypass them.
+
+**Note on Governance Controls:** Governance-oriented controls (e.g. CloudTrail, Config, SCPs) are cross-cutting in nature. For scoring purposes, each such control is mapped to the pillar most directly protected by that control (e.g. SCPs → IAM, VPC Flow Logs → Networking, GuardDuty → Monitoring, Security Hub → Monitoring).
 
 ---
 
@@ -221,10 +226,11 @@ If `level_score(N, P) < 80` for any pillar P, then controls in level N+1 (and ab
 
 | Pillar     | Weight |
 |------------|--------|
-| IAM        | 0.35   |
-| Networking | 0.25   |
+| IAM        | 0.30   |
+| Networking | 0.20   |
 | Storage    | 0.20   |
-| Compute    | 0.20   |
+| Compute    | 0.15   |
+| Monitoring | 0.15   |
 
 ### 7.6 Overall Score
 
