@@ -127,7 +127,11 @@ Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](sel
 
 - [spec/](spec/) — Full model specification
 - [controls/](controls/) — Control definitions by pillar and level
-- [docs/iam-pillar.md](docs/iam-pillar.md) — IAM pillar deep dive (26 controls, visual maturity map)
+- [docs/iam-pillar.md](docs/iam-pillar.md) — IAM pillar deep dive (26 controls)
+- [docs/networking-pillar.md](docs/networking-pillar.md) — Networking pillar deep dive (16 controls)
+- [docs/storage-pillar.md](docs/storage-pillar.md) — Storage pillar deep dive (21 controls)
+- [docs/compute-pillar.md](docs/compute-pillar.md) — Compute pillar deep dive (17 controls)
+- [docs/monitoring-pillar.md](docs/monitoring-pillar.md) — Monitoring pillar deep dive (21 controls)
 - [self-assessment/](self-assessment/) — Checklist and scoring guide
 
 ---
