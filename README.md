@@ -52,71 +52,26 @@ Each level builds on the one below it. **Levels are gated** — you must score �
 
 ### Levels × Pillars
 
-```mermaid
-block-beta
-  columns 6
-
-  space:1 H1["🔐 IAM\n30%"]:1 H2["🌐 Networking\n20%"]:1 H3["💾 Storage\n20%"]:1 H4["⚙️ Compute\n15%"]:1 H5["📡 Monitoring\n15%"]:1
-
-  L5["L5\nAutonomous"]:1 A5["Auto-revoke\npolicy drift"]:1 B5["Auto-isolate\nanomalies"]:1 C5["Auto-rotate\nsecrets"]:1 D5["Self-healing\ninfra"]:1 E5["Continuous\nverification"]:1
-
-  L4["L4\nVerified"]:1 A4["Access Analyzer\nunused roles"]:1 B4["Drift detection\nweekly"]:1 C4["Object Lock\nintegrity"]:1 D4["SSM managed\nno SSH keys"]:1 E4["Score tracking\nover time"]:1
-
-  L3["L3\nHardened"]:1 A3["Permission\nboundaries\nABAC"]:1 B3["WAF, origin\nprotection\nVPC endpoints"]:1 C3["CMK rotation\nscoped policies\nsecret rotation"]:1 D3["No wildcard\nLambda perms\nEKS private"]:1 E3["NACL/gateway\nroute table\nalerts"]:1
-
-  L2["L2\nGuarded"]:1 A2["SCPs: deny\nroot, region\nrestrict"]:1 B2["Flow logs\nNACLs\ngateway EPs"]:1 C2["Versioning\nbackups\nencryption"]:1 D2["IMDSv2\nECR scan\nno privileged"]:1 E2["Security Hub\nroot alarm\nAPI alerts"]:1
-
-  L1["L1\nExposed"]:1 A1["MFA all users\nno root keys\nSSO only"]:1 B1["No open SSH\nno open RDP\nHTTPS only"]:1 C1["S3 public\nblock, RDS\nno public"]:1 D1["EBS encrypt\nno public IP\nno public AMI"]:1 E1["(no L1\nmonitoring\ncontrols)"]:1
-
-  style L5 fill:#1a1a2e,color:#e94560
-  style L4 fill:#16213e,color:#0f3460
-  style L3 fill:#0f3460,color:#e94560
-  style L2 fill:#533483,color:#e94560
-  style L1 fill:#e94560,color:#1a1a2e
-
-  style A5 fill:#2d2d44,color:#fff
-  style B5 fill:#2d2d44,color:#fff
-  style C5 fill:#2d2d44,color:#fff
-  style D5 fill:#2d2d44,color:#fff
-  style E5 fill:#2d2d44,color:#fff
-
-  style A4 fill:#1e3a5f,color:#fff
-  style B4 fill:#1e3a5f,color:#fff
-  style C4 fill:#1e3a5f,color:#fff
-  style D4 fill:#1e3a5f,color:#fff
-  style E4 fill:#1e3a5f,color:#fff
-
-  style A3 fill:#1b4f72,color:#fff
-  style B3 fill:#1b4f72,color:#fff
-  style C3 fill:#1b4f72,color:#fff
-  style D3 fill:#1b4f72,color:#fff
-  style E3 fill:#1b4f72,color:#fff
-
-  style A2 fill:#6c3483,color:#fff
-  style B2 fill:#6c3483,color:#fff
-  style C2 fill:#6c3483,color:#fff
-  style D2 fill:#6c3483,color:#fff
-  style E2 fill:#6c3483,color:#fff
-
-  style A1 fill:#e94560,color:#1a1a2e
-  style B1 fill:#e94560,color:#1a1a2e
-  style C1 fill:#e94560,color:#1a1a2e
-  style D1 fill:#e94560,color:#1a1a2e
-  style E1 fill:#e94560,color:#1a1a2e
-```
+| | IAM (30%) | Networking (20%) | Storage (20%) | Compute (15%) | Monitoring (15%) |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **L5 Autonomous** | Auto-revoke policy drift | Auto-isolate anomalies | Auto-rotate secrets | Self-healing infra | Continuous verification |
+| **L4 Verified** | Access Analyzer, unused roles | Drift detection weekly | Object Lock integrity | SSM managed, no SSH keys | Score tracking over time |
+| **L3 Hardened** | Permission boundaries, ABAC | WAF, origin protection, VPC endpoints | CMK rotation, scoped policies, secret rotation | No wildcard Lambda perms, EKS private | NACL/gateway route table alerts |
+| **L2 Guarded** | SCPs: deny root, region restrict | Flow logs, NACLs, gateway EPs | Versioning, backups, encryption | IMDSv2, ECR scan, no privileged | Security Hub, root alarm, API alerts |
+| **L1 Exposed** | MFA all users, no root keys, SSO only | No open SSH, no open RDP, HTTPS only | S3 public block, RDS no public | EBS encrypt, no public IP, no public AMI | — |
 
 ### Scoring at a Glance
 
-```mermaid
-flowchart LR
-  A["Per-Control\nPass/Fail"] -->|"× severity\nweight"| B["Level Score\n0–100"]
-  B -->|"≥ 80%?\nGating check"| C["Pillar Score\nweighted by level"]
-  C -->|"× pillar\nweight"| D["Overall Score\n0–100"]
-
-  style A fill:#e94560,color:#fff,stroke:#e94560
-  style B fill:#533483,color:#fff,stroke:#533483
-  style C fill:#0f3460,color:#fff,stroke:#0f3460
-  style D fill:#1a1a2e,color:#e94560,stroke:#e94560
+```
+Per-Control Pass/Fail  →  × severity weight  →  Level Score (0–100)
+                                                       ↓
+                                                 ≥ 80%? Gating check
+                                                       ↓
+                                              Pillar Score (weighted by level)
+                                                       ↓
+                                                 × pillar weight
+                                                       ↓
+                                              Overall Score (0–100)
 ```
 
 | Severity | Weight | | Level | Weight | | Pillar | Weight |
