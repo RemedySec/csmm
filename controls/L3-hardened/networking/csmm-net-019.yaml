@@ -1,0 +1,41 @@
+id: "csmm-net-019"
+name: "VPC Endpoint Strategy for Private Connectivity"
+level: 3
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All VPCs must use VPC endpoints (Gateway and Interface) to access AWS services
+  without traversing the public internet. At minimum, deploy Gateway endpoints for
+  S3 and DynamoDB, and Interface endpoints for KMS, STS, EC2, ECR, CloudWatch Logs,
+  Secrets Manager, and SSM in every VPC with workloads. Endpoint policies must
+  restrict access to resources within the organization using aws:PrincipalOrgID
+  conditions. This is a foundational component of the data perimeter architecture.
+
+risk: >
+  Without VPC endpoints, all AWS API calls from private subnets traverse NAT Gateways
+  and the public internet, exposing API traffic to potential interception and creating
+  a dependency on internet connectivity for core AWS service access. Credentials
+  exfiltrated from a VPC can be used from any network location. VPC endpoints combined
+  with endpoint policies and resource policies create a network-layer data perimeter
+  that limits credential abuse to within the trusted network.
+
+verification:
+  - "List all VPC endpoints per VPC and confirm coverage of S3, DynamoDB, KMS, STS, ECR, SSM, CloudWatch Logs"
+  - "Verify endpoint policies include aws:PrincipalOrgID conditions restricting access to organization principals"
+  - "Confirm S3 bucket policies and KMS key policies include aws:SourceVpce deny conditions"
+  - "Test that removing the NAT Gateway does not break AWS API access for core services"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7(5)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/building-a-data-perimeter-on-aws/network-perimeter.html"
+  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"

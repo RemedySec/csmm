@@ -1,0 +1,45 @@
+id: "csmm-str-025"
+name: "Secrets Management Architecture"
+level: 3
+pillar: "storage"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All application secrets (database credentials, API keys, TLS certificates,
+  OAuth tokens) must be stored in AWS Secrets Manager or SSM Parameter Store
+  (SecureString) and retrieved at runtime — never baked into container images,
+  environment variables in task definitions, Lambda environment variables in
+  plaintext, or committed to source code. Secrets must have automatic rotation
+  configured with rotation intervals appropriate to their classification.
+  Access to secrets must be scoped per-workload using IAM policies with
+  resource-level ARN conditions.
+
+risk: >
+  Hardcoded or statically configured secrets cannot be rotated without
+  redeployment, making incident response slow and credential compromise
+  long-lived. Secrets in environment variables are visible in the AWS console,
+  in CloudTrail logs, and in process listings. Without centralized secrets
+  management, teams create their own storage mechanisms (S3, DynamoDB, config
+  files), creating an unauditable sprawl of credentials with no rotation
+  or access logging.
+
+verification:
+  - "Scan all ECS task definitions, Lambda functions, and CloudFormation templates for plaintext secrets"
+  - "Confirm all production secrets are stored in Secrets Manager with rotation enabled"
+  - "Verify rotation intervals: database credentials ≤ 30 days, API keys ≤ 90 days"
+  - "Confirm IAM policies restrict secretsmanager:GetSecretValue to specific secret ARNs per workload"
+  - "Validate that Secrets Manager access is logged via CloudTrail and anomalous access triggers alerts"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-5(7)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 02 — How do you manage authentication for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-securestring.html"

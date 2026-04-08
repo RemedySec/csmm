@@ -1,0 +1,43 @@
+id: "csmm-cmp-019"
+name: "Patch Management Process"
+level: 3
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Implement a structured patch management process using SSM Patch Manager with
+  defined maintenance windows per environment (dev first, then staging, then
+  production). Critical security patches must be applied within 48 hours of
+  release, high within 7 days, and medium within 30 days. Patch compliance must
+  be tracked via SSM Compliance and reported on a dashboard. Instances that fall
+  out of compliance must trigger alerts. For containers and serverless, base image
+  rebuilds must be triggered automatically when upstream images receive security
+  updates.
+
+risk: >
+  Unpatched systems are the most common initial access vector in cloud breaches.
+  Without a defined process, patching becomes ad-hoc — teams skip windows,
+  defer critical patches, and lose track of which systems are behind. The gap
+  between vulnerability disclosure and exploitation is shrinking to hours for
+  critical CVEs. A process without SLAs is not a process.
+
+verification:
+  - "Confirm SSM Patch Manager baselines are defined for all OS types in the fleet"
+  - "Verify maintenance windows are scheduled: dev (weekly), staging (bi-weekly), production (monthly with critical exceptions)"
+  - "Confirm patch compliance is above 95% across all managed instances"
+  - "Verify critical patch SLA of 48 hours is met — check SSM Compliance for any instances with overdue critical patches"
+  - "Confirm container base image rebuild pipeline triggers on upstream security updates"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "SI-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your compute resources?"
+
+references:
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-patch.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-compliance-about.html"
+  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/patch-management-hybrid-cloud/welcome.html"

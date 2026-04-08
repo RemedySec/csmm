@@ -1,0 +1,39 @@
+id: "csmm-net-022"
+name: "DNS Security and Route53 Hardening"
+level: 4
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Enable DNSSEC signing on all public Route53 hosted zones to protect against DNS
+  spoofing and cache poisoning. Enable Route53 Resolver query logging in all VPCs
+  and ship logs to a centralized SIEM for anomaly detection (e.g., DNS tunneling,
+  DGA domains). Implement Route53 Resolver DNS Firewall with managed threat
+  intelligence blocklists and custom blocklists derived from threat hunting.
+  DNS resolution for private hosted zones must not leak to public resolvers.
+
+risk: >
+  DNS is the first step in nearly every network connection and a prime target for
+  attackers. Without DNSSEC, DNS responses can be spoofed to redirect traffic to
+  attacker infrastructure. Without DNS query logging and filtering, DNS tunneling
+  can exfiltrate data at low bandwidth undetected, and compromised workloads can
+  resolve C2 domains without any network-layer visibility.
+
+verification:
+  - "Confirm DNSSEC signing is enabled on all public Route53 hosted zones"
+  - "Verify Route53 Resolver query logging is enabled in all VPCs and logs are shipped to SIEM"
+  - "Confirm DNS Firewall is associated with all VPCs using AWS managed threat lists"
+  - "Test that a known malicious domain is blocked by DNS Firewall"
+  - "Verify private hosted zones are not resolvable from outside the VPC"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-20"
+
+references:
+  - "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-configure-dnssec.html"
+  - "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logging.html"
+  - "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-dns-firewall.html"

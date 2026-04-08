@@ -1,0 +1,42 @@
+id: "csmm-str-026"
+name: "Backup and Disaster Recovery Architecture"
+level: 4
+pillar: "storage"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Implement a cross-region, cross-account backup architecture using AWS Backup
+  with centrally managed backup policies. Production backups must be copied to
+  a dedicated backup account in a separate region with vault lock (WORM) enabled.
+  Recovery procedures must be tested quarterly with documented RTO/RPO targets
+  per data classification. Backup completion, copy success, and restore test
+  results must be tracked in a dashboard with automated alerting on failures.
+
+risk: >
+  Backups stored in the same account as production data are vulnerable to the
+  same compromise — ransomware or a malicious insider can delete both primary
+  data and backups simultaneously. Without cross-account vaults with vault lock,
+  there is no immutable last line of defense. Without tested recovery, backups
+  may be corrupt, incomplete, or incompatible with current infrastructure,
+  turning a theoretical safety net into a false sense of security.
+
+verification:
+  - "Confirm AWS Backup is configured with organization-level backup policies covering all production resources"
+  - "Verify backup copies are sent to a separate backup account in a different region"
+  - "Confirm vault lock is enabled on the backup account's vaults with a minimum retention of 90 days"
+  - "Review quarterly restore test results and confirm RTO/RPO targets were met"
+  - "Verify backup job failure alerts are configured and routed to the on-call team"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.5"
+  - framework: "NIST 800-53"
+    control: "CP-9"
+  - framework: "ISO 27001"
+    control: "A.12.3.1"
+
+references:
+  - "https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html"
+  - "https://docs.aws.amazon.com/aws-backup/latest/devguide/vault-lock.html"
+  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/backup-recovery/welcome.html"

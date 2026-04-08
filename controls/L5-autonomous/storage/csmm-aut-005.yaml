@@ -1,0 +1,40 @@
+id: "csmm-aut-005"
+name: "Automated Secret Rotation and Credential Lifecycle"
+level: 5
+pillar: "storage"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All secrets and credentials must be automatically rotated on schedule without
+  human intervention or application downtime. Secrets Manager rotation Lambdas
+  must handle multi-user rotation for databases (alternating user strategy) and
+  single-user rotation for API keys. Failed rotations must trigger immediate
+  alerts and automatic rollback. Credential lifecycle must be fully automated:
+  creation, rotation, distribution, and revocation all happen without manual steps.
+  Long-lived credentials must be zero — every secret has an active rotation schedule.
+
+risk: >
+  Manual rotation is slow, error-prone, and frequently skipped under time pressure.
+  During a credential compromise, the time to rotate determines the window of
+  exposure. Automated rotation reduces this to minutes. Without automation, teams
+  accumulate long-lived secrets that become ticking time bombs — each one a
+  persistent access vector that grows more dangerous the longer it lives.
+
+verification:
+  - "Confirm every secret in Secrets Manager has an active rotation schedule with no overdue rotations"
+  - "Verify rotation Lambdas use multi-user strategy for database credentials"
+  - "Test that a forced rotation completes without application downtime or errors"
+  - "Confirm failed rotation attempts trigger PagerDuty/SNS alerts within 5 minutes"
+  - "Validate that zero long-lived credentials exist — no static API keys, no unrotated database passwords"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-5(1)"
+
+references:
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets_strategies.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_turn-on-for-db.html"

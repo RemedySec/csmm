@@ -1,0 +1,43 @@
+id: "csmm-net-021"
+name: "DDoS Protection Strategy"
+level: 3
+pillar: "networking"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  Internet-facing workloads must be protected by a layered DDoS mitigation
+  architecture. At minimum: AWS Shield Advanced enrolled on all public-facing
+  resources (CloudFront, ALB, NLB, Elastic IP, Global Accelerator), WAF rate
+  limiting rules on all application endpoints, and CloudFront as the edge layer
+  absorbing volumetric attacks before they reach origin infrastructure. A DDoS
+  response runbook must be documented and the AWS Shield Response Team (SRT)
+  must be authorized for proactive engagement.
+
+risk: >
+  Without a deliberate DDoS strategy, volumetric or application-layer attacks
+  can overwhelm infrastructure, cause cascading failures, and create availability
+  events that mask other attacks. Shield Standard provides basic L3/L4 protection
+  but cannot mitigate sophisticated application-layer attacks. Shield Advanced
+  provides cost protection, SRT access, and advanced detection that are critical
+  for production workloads.
+
+verification:
+  - "Confirm Shield Advanced is enabled and all public-facing resources are enrolled"
+  - "Verify WAF rate limiting rules exist on all ALB and API Gateway stages"
+  - "Confirm CloudFront is deployed in front of all internet-facing origins"
+  - "Review DDoS response runbook and confirm SRT proactive engagement is authorized"
+  - "Validate health checks are configured for Shield Advanced protected resources"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "SC-5"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your compute resources?"
+
+references:
+  - "https://docs.aws.amazon.com/waf/latest/developerguide/shield-chapter.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/aws-best-practices-ddos-resiliency.html"
+  - "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-srt-support.html"

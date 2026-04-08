@@ -2,7 +2,7 @@
 
 # Cloud Security Maturity Model (CSMM)
 
-DORA metrics for cloud security. One score, five pillars, five levels.
+The missing scorecard for cloud security. One score, five pillars, five levels.
 
 ```
 L1 ████████████████████░ 82%
@@ -17,7 +17,40 @@ Overall: Level 2 Guarded — 58/100
 
 ## What is CSMM?
 
-CSMM is an open, scored, leveled maturity model for AWS cloud security. It defines **WHAT** to secure (controls), **WHEN** to secure it (maturity levels), and **HOW** to measure progress (scoring). Think "DORA metrics, but for cloud security."
+CSMM is an open, scored, leveled maturity model for AWS cloud security. It defines **WHAT** to secure (controls), **WHEN** to secure it (maturity levels), and **HOW** to measure progress (scoring).
+
+Most security tools stop at configuration checks — is MFA on? Is the bucket public? CSMM starts there but goes far beyond. **The real value is in Levels 3–5**, where CSMM scores the architectural decisions and security processes that separate a compliant org from a truly secure one:
+
+- **Data perimeters** — are your resources locked to trusted networks and identities?
+- **ABAC/RBAC** — is your access model structured, or a sprawl of ad-hoc inline policies?
+- **Cross-account trust** — do your trust policies prevent confused deputy attacks?
+- **JIT/break-glass access** — does anyone have standing admin access to production?
+- **Auto-remediation** — does your environment self-heal, or wait for a human?
+
+No scanner can tell you whether your IAM architecture is sound. CSMM can.
+
+---
+
+## Beyond Configuration Checks
+
+```
+L1–L2  Configuration & Guardrails     ← What scanners cover
+       MFA, SCPs, encryption, CloudTrail
+
+L3     Security Architecture           ← Where CSMM diverges
+       Data perimeters, ABAC/RBAC, least privilege
+       reviews, cross-account trust, permission boundaries
+
+L4     Continuous Verification         ← Process maturity
+       Access analysis, JIT access, IaC security gates,
+       drift detection
+
+L5     Autonomous Security             ← Self-healing operations
+       Auto-remediation, policy drift auto-revert,
+       zero standing privilege
+```
+
+L1–L2 gets you compliant. **L3–L5 gets you secure.**
 
 ---
 
@@ -54,11 +87,11 @@ Each level builds on the one below it. **Levels are gated** — you must score �
 
 | | IAM (30%) | Networking (20%) | Storage (20%) | Compute (15%) | Monitoring (15%) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **L5 Autonomous** | Auto-revoke policy drift | Auto-isolate anomalies | Auto-rotate secrets | Self-healing infra | Continuous verification |
-| **L4 Verified** | Access Analyzer, unused roles | Drift detection weekly | Object Lock integrity | SSM managed, no SSH keys | Score tracking over time |
-| **L3 Hardened** | Permission boundaries, ABAC | WAF, origin protection, VPC endpoints | CMK rotation, scoped policies, secret rotation | No wildcard Lambda perms, EKS private | NACL/gateway route table alerts |
-| **L2 Guarded** | SCPs: deny root, region restrict | Flow logs, NACLs, gateway EPs | Versioning, backups, encryption | IMDSv2, ECR scan, no privileged | Security Hub, root alarm, API alerts |
-| **L1 Exposed** | MFA all users, no root keys, SSO only | No open SSH, no open RDP, HTTPS only | S3 public block, RDS no public | EBS encrypt, no public IP, no public AMI | — |
+| **L5 Autonomous** | Policy drift auto-revert | Anomaly auto-isolate | Automated secret rotation | Self-healing infra | Automated incident response (SOAR) |
+| **L4 Verified** | Access Analyzer, JIT access, IaC gates | DNS security, drift detection | Backup architecture, Object Lock | Hardened image pipeline, SSM-only access | Threat hunting, security metrics |
+| **L3 Hardened** | ABAC/RBAC, data perimeters, cross-account trust, least privilege reviews | Network segmentation, VPC endpoints, egress filtering, DDoS strategy | Data classification, key mgmt architecture, secrets management | Container security, workload isolation, patch management | Observability architecture, incident response runbooks |
+| **L2 Guarded** | SCPs, temp credentials, CloudTrail | Flow logs, NACLs, GuardDuty | Versioning, backups, encryption | IMDSv2, launch templates | Security Hub, 12 CloudWatch alarms |
+| **L1 Exposed** | MFA, root lockdown, SSO, key rotation | No open SSH/RDP, HTTPS, TLS 1.2 | S3 public block, RDS private, encryption | EBS encrypt, no public IP/AMI | — |
 
 ### Scoring at a Glance
 
@@ -106,6 +139,7 @@ Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](sel
 | Type | Checklist | Phases | Framework | Scanner | Maturity model |
 | Levels | None | 4 phases | 4 tiers | None | 5 levels (gated) |
 | Scoring | Pass/fail | None | None | 0–100 (compliance) | 0–100 (maturity) |
+| Scores architecture & process | No | Partially | No | No | **Yes (L3–L5)** |
 | Open source | No (free PDF) | No (AWS-owned) | Yes | Partial | Yes (Apache 2.0) |
 | Progression path | No | Yes | No | No | Yes (leveled) |
 | Community-owned | No | No | No | Partial | Yes |

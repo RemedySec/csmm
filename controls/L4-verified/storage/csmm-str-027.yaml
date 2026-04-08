@@ -1,0 +1,42 @@
+id: "csmm-str-027"
+name: "S3 Object Lock for Compliance Data"
+level: 4
+pillar: "storage"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  All S3 buckets storing compliance-relevant data (audit logs, financial records,
+  healthcare data, legal holds) must have Object Lock enabled in Compliance mode
+  with retention periods matching regulatory requirements. Object Lock prevents
+  any principal — including root — from deleting or overwriting objects during
+  the retention period. Governance mode may be used for non-regulatory data
+  where authorized overrides are acceptable with audit logging.
+
+risk: >
+  Without Object Lock, even well-intentioned administrators can accidentally
+  purge compliance data, and attackers with sufficient privileges can delete
+  audit trails to cover their tracks. S3 versioning alone is insufficient
+  because versions can be permanently deleted. Compliance mode Object Lock
+  provides a true WORM guarantee that satisfies regulatory requirements and
+  makes audit log destruction technically impossible during the retention window.
+
+verification:
+  - "Identify all buckets tagged with compliance-relevant classifications and confirm Object Lock is enabled"
+  - "Verify Object Lock mode is set to Compliance (not Governance) for regulatory data"
+  - "Confirm retention periods align with regulatory requirements (e.g., 7 years for SOX, 6 years for HIPAA)"
+  - "Test that an object within its retention period cannot be deleted, even by an administrator"
+  - "Verify CloudTrail log bucket has Object Lock with Compliance mode enabled"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.4"
+  - framework: "NIST 800-53"
+    control: "AU-9"
+  - framework: "HIPAA"
+    control: "164.312(c)(1)"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-overview.html"
+  - "https://aws.amazon.com/blogs/storage/protecting-data-with-amazon-s3-object-lock/"
