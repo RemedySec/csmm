@@ -1,0 +1,41 @@
+id: "csmm-iam-019"
+name: "Enforce ABAC/RBAC Access Patterns"
+level: 3
+pillar: "iam"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  All IAM policies must follow either Attribute-Based Access Control (ABAC) using
+  resource tags and session tags, or Role-Based Access Control (RBAC) using
+  purpose-specific IAM roles — not user-level inline policies. ABAC policies must
+  use aws:PrincipalTag and aws:ResourceTag conditions to scope access dynamically
+  based on project, environment, or team attributes. RBAC implementations must
+  define distinct roles per job function with no shared or generic roles.
+
+risk: >
+  Without structured ABAC or RBAC patterns, access control devolves into per-user
+  or per-resource inline policies that are impossible to audit at scale. Teams
+  create one-off policies for each request, leading to thousands of unique policy
+  documents with inconsistent scoping. This makes it infeasible to answer basic
+  questions like "who can access production data?" and creates gaps that only
+  surface during incidents.
+
+verification:
+  - "Audit all IAM policies for use of tag-based conditions (aws:PrincipalTag, aws:ResourceTag) or confirm role-per-function RBAC model is documented"
+  - "Verify no inline policies are attached directly to IAM users — all policies should be managed and attached to roles or groups"
+  - "Confirm a tagging strategy exists that defines mandatory tags (e.g., Environment, Team, Project) used in IAM policy conditions"
+  - "Review a sample of cross-team resource access to confirm ABAC conditions correctly restrict access by tag"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html"

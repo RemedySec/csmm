@@ -1,0 +1,43 @@
+id: "csmm-iam-020"
+name: "Cross-Account IAM Trust Controls"
+level: 3
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All cross-account IAM role trust policies must include explicit conditions to
+  prevent confused deputy attacks — at minimum aws:SourceArn, aws:SourceAccount,
+  or aws:PrincipalOrgID conditions. Trust policies must not use wildcard (*)
+  principals or allow assumption from accounts outside the AWS Organization.
+  An SCP must deny iam:CreateRole and iam:UpdateAssumeRolePolicy unless the
+  trust policy includes an approved condition key.
+
+risk: >
+  Overly permissive trust policies allow any principal in the trusted account —
+  not just the intended service or role — to assume the cross-account role. This
+  creates confused deputy vulnerabilities where a compromised or multi-tenant
+  service in the trusted account can escalate access into your account. Without
+  aws:PrincipalOrgID conditions, roles can also be assumed by accounts that have
+  left or were never part of your organization.
+
+verification:
+  - "List all IAM roles with cross-account trust policies: aws iam list-roles and filter for trust policies referencing external account IDs"
+  - "For each cross-account role, confirm the trust policy includes aws:SourceArn, aws:SourceAccount, or aws:PrincipalOrgID conditions"
+  - "Verify no trust policy uses Principal: '*' or Principal: {AWS: '*'}"
+  - "Confirm IAM Access Analyzer findings for external access have been reviewed and resolved"
+  - "Validate SCP exists that restricts trust policy creation to approved patterns"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-6(3)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"

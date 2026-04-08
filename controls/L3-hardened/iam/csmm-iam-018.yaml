@@ -1,0 +1,41 @@
+id: "csmm-iam-018"
+name: "Periodic Least Privilege Access Review"
+level: 3
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All IAM roles and policies must undergo a quarterly least privilege review using
+  IAM Access Analyzer policy generation and CloudTrail-based access activity data.
+  Permissions granted but not exercised within 90 days must be flagged for removal.
+  Use Access Analyzer's policy generation feature to create right-sized policies
+  based on actual usage, and replace overly broad policies with scoped-down versions.
+
+risk: >
+  Permissions accumulate over time as teams request access for projects, migrations,
+  and incidents but rarely relinquish them afterward. This privilege creep creates
+  an ever-expanding blast radius — a compromised role with months of accumulated
+  unused permissions grants attackers far broader access than the role's current
+  function requires.
+
+verification:
+  - "Confirm IAM Access Analyzer policy generation has been run for all high-privilege roles within the last 90 days"
+  - "Review Access Analyzer findings for unused permissions and confirm remediation tickets exist for each"
+  - "Verify that no IAM policy grants wildcard (*) actions on wildcard (*) resources outside of admin break-glass roles"
+  - "Check that a quarterly access review cadence is documented and last review was completed within 90 days"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-6(7)"
+  - framework: "ISO 27001"
+    control: "A.9.2.5"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
