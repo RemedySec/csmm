@@ -8,9 +8,8 @@ severity_weight: 3
 description: >
   VPC Flow Logs must be enabled on all VPCs and configured to capture ACCEPT
   and REJECT traffic, with log data delivered to CloudWatch Logs or S3 with
-  a retention policy of at least 90 days. Flow logs should capture the
-  enhanced metadata format to include traffic-type, TCP flags, and packet-level
-  fields for richer forensic analysis.
+  a retention policy of at least 90 days. Flow logs must use log format version 5 with fields: srcaddr, dstaddr, srcport, dstport, protocol, tcp-flags, type, pkt-srcaddr, pkt-dstaddr
+  for richer forensic analysis.
 
 risk: >
   Without VPC Flow Logs, security teams have no visibility into which IP

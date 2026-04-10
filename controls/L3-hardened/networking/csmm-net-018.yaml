@@ -9,8 +9,7 @@ description: >
   Implement a documented network segmentation strategy using separate VPCs per
   workload classification (production, staging, development, shared services) with
   explicit inter-VPC connectivity via Transit Gateway or VPC peering. Each VPC must
-  have tiered subnets (public, private, isolated) with workloads placed in the most
-  restrictive tier possible. Cross-environment traffic must traverse inspection points
+  have tiered subnets (public, private, isolated). Workloads must follow subnet tier placement rules: databases and caches in isolated subnets (no route to 0.0.0.0/0), application services in private subnets (NAT-only egress), load balancers and CDN origins in public subnets. Exceptions require subnet tag SubnetException=approved with ExceptionExpiry date. Cross-environment traffic must traverse inspection points
   (Network Firewall or third-party appliances) with deny-by-default routing.
 
 risk: >
@@ -21,7 +20,7 @@ risk: >
   chokepoints where detection and prevention controls are concentrated.
 
 verification:
-  - "Confirm a network segmentation design document exists mapping VPCs to workload classifications"
+  - "For every VPC, run: aws ec2 describe-route-tables. Isolated subnets must have no route to 0.0.0.0/0. RDS and ElastiCache subnet groups must reference only isolated subnets. No EC2 instance in an isolated subnet may have an associated public IP."
   - "Verify production VPCs have no direct peering to development or sandbox VPCs"
   - "Validate Transit Gateway route tables enforce deny-by-default between security domains"
   - "Confirm workloads are placed in private or isolated subnets unless they explicitly require public ingress"

@@ -6,9 +6,8 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  High-severity GuardDuty findings that indicate active compromise — such as
-  UnauthorizedAccess:EC2/SSHBruteForce, Trojan:EC2/BlackholeTraffic, or
-  CryptoCurrency:EC2/BitcoinTool — must trigger automated network isolation of
+  High-severity GuardDuty findings that indicate active compromise —
+  Isolation triggers on findings with severity >= 7.0 AND finding type prefix matching: UnauthorizedAccess:EC2, Trojan:EC2, CryptoCurrency:EC2, or Backdoor:EC2 — must trigger automated network isolation of
   the affected instance. Isolation is achieved by replacing the instance's security
   groups with a quarantine group that blocks all inbound and outbound traffic except
   to the forensic logging endpoint, enabling evidence collection without further
@@ -27,6 +26,7 @@ verification:
   - "Review the isolation Lambda to confirm it replaces instance security groups with the quarantine group and creates a CloudWatch alarm for ongoing monitoring"
   - "Run a simulated GuardDuty finding using the GenerateSampleFindings API and confirm the isolation workflow executes end-to-end"
   - "Confirm an automated PagerDuty or SNS alert notifies the security team with finding details and the affected instance ID immediately after isolation"
+  - "Quarantine security group must have zero inbound rules and a single outbound rule allowing port 443 to the forensic collection endpoint CIDR only."
 
 compliance:
   - framework: "SOC2"

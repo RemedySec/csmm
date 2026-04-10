@@ -12,7 +12,10 @@ description: >
   single-user rotation for API keys. Failed rotations must trigger immediate
   alerts and automatic rollback. Credential lifecycle must be fully automated:
   creation, rotation, distribution, and revocation all happen without manual steps.
-  Long-lived credentials must be zero — every secret has an active rotation schedule.
+  Zero secrets in Secrets Manager may have LastRotatedDate older than their
+  configured rotation interval. Zero secrets may have RotationEnabled=false.
+  Zero IAM access keys may have CreateDate older than 90 days as reported by
+  the IAM credential report.
 
 risk: >
   Manual rotation is slow, error-prone, and frequently skipped under time pressure.
@@ -26,7 +29,7 @@ verification:
   - "Verify rotation Lambdas use multi-user strategy for database credentials"
   - "Test that a forced rotation completes without application downtime or errors"
   - "Confirm failed rotation attempts trigger PagerDuty/SNS alerts within 5 minutes"
-  - "Validate that zero long-lived credentials exist — no static API keys, no unrotated database passwords"
+  - "Run: aws secretsmanager list-secrets --query 'SecretList[?RotationEnabled==`false`]' — count must be zero. Run: aws iam generate-credential-report and verify no access key has CreateDate older than 90 days. Run: aws secretsmanager list-secrets and verify no secret has LastRotatedDate exceeding its RotationRules.AutomaticallyAfterDays value."
 
 compliance:
   - framework: "SOC2"

@@ -6,11 +6,13 @@ priority: "medium"
 severity_weight: 2
 
 description: >
-  Establish a proactive threat hunting cadence — at minimum monthly — where
-  security analysts form hypotheses about attacker TTPs and systematically search
-  for indicators across the centralized security data lake. Hunts must be
-  structured using the MITRE ATT&CK Cloud matrix as a coverage framework,
-  with documented hypotheses, queries, findings, and resulting detection rules.
+  Establish a proactive threat hunting cadence — at least 2 documented hunts per
+  month, each targeting a distinct MITRE ATT&CK Cloud technique — where security
+  analysts form hypotheses about attacker TTPs and systematically search for
+  indicators across the centralized security data lake. Each hunt report must
+  contain: hypothesis, ATT&CK technique ID, queries executed, findings, and any
+  new detection rules created. Target: cover at least 30% of MITRE ATT&CK Cloud
+  techniques within 12 months.
   Each hunt that discovers a gap must produce a new automated detection rule
   in GuardDuty custom threat lists, CloudWatch Insights queries, or SIEM
   correlation rules. Track ATT&CK technique coverage percentage over time.

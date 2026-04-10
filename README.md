@@ -57,28 +57,28 @@ L1–L2 gets you compliant. **L3–L5 gets you secure.**
 ## The Framework
 
 ```
-                        ╔══════════════════════════╗
-                        ║     L5  AUTONOMOUS       ║
-                        ║   Self-healing, zero-     ║
-                        ║   trust, auto-remediate   ║
-                     ╔══╩══════════════════════════╩══╗
-                     ║       L4  VERIFIED              ║
-                     ║   Drift detection, CI/CD gates, ║
-                     ║   blast radius, IaC governance   ║
-                  ╔══╩══════════════════════════════════╩══╗
-                  ║         L3  HARDENED                    ║
-                  ║   Least privilege, ABAC, data           ║
-                  ║   perimeters, cross-account trust       ║
-               ╔══╩════════════════════════════════════════╩══╗
-               ║           L2  GUARDED                        ║
-               ║   SCPs, flow logs, CloudTrail, encryption,   ║
-               ║   monitoring alarms, baseline guardrails     ║
-            ╔══╩══════════════════════════════════════════════╩══╗
-            ║             L1  EXPOSED                            ║
-            ║   MFA, root lockdown, public access blocks,       ║
-            ║   default SG restrictions, basic encryption       ║
-            ╚════════════════════════════════════════════════════╝
-            ┃ IAM 30%  ┃ NET 20%  ┃ STR 20%  ┃ CMP 15% ┃ MON 15% ┃
+            ╔═════════════════════════╗
+            ║     L5  AUTONOMOUS      ║
+            ║   Self-healing, zero-   ║
+            ║  trust, auto-remediate  ║
+         ╔══╩═════════════════════════╩══╗
+         ║         L4  VERIFIED          ║
+         ║    Drift detection, CI/CD     ║
+         ║     gates, IaC governance     ║
+      ╔══╩═══════════════════════════════╩══╗
+      ║            L3  HARDENED             ║
+      ║     Least privilege, ABAC, data     ║
+      ║   perimeters, cross-account trust   ║
+   ╔══╩═════════════════════════════════════╩══╗
+   ║                L2  GUARDED                ║
+   ║        SCPs, flow logs, CloudTrail        ║
+   ║       encryption, monitoring alarms       ║
+╔══╩═══════════════════════════════════════════╩══╗
+║                   L1  EXPOSED                   ║
+║    MFA, root lockdown, public access blocks     ║
+║    default SG restrictions, basic encryption    ║
+╚═════════════════════════════════════════════════╝
+┃ IAM 30% ┃ NET 20% ┃ STR 20% ┃ CMP 15% ┃ MON 15% ┃
 ```
 
 Each level builds on the one below it. **Levels are gated** — you must score ≥80% on a level before the next unlocks. You can't skip MFA by being great at ABAC.

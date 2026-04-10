@@ -9,11 +9,11 @@ description: >
   A documented incident response process must exist with defined severity levels,
   escalation paths, roles (incident commander, security analyst, communications lead),
   and SLAs for response and containment. Automated runbooks must be implemented
-  for the top 10 most common security events: compromised credentials, public S3
-  bucket, GuardDuty high-severity finding, unauthorized API activity, crypto-mining
-  detection, root account usage, privilege escalation attempt, data exfiltration
-  signal, unauthorized network change, and failed authentication spike. Runbooks
-  must be tested via tabletop exercises at least quarterly.
+  for at minimum these 6 scenarios: (1) compromised IAM credentials, (2) public S3
+  bucket, (3) GuardDuty high-severity finding, (4) root account usage, (5) crypto-mining
+  detection, (6) data exfiltration signal. Tabletop exercises must be conducted
+  quarterly, lasting at least 2 hours, with at least 3 participants including the
+  incident commander role. Exercise results and findings must be documented.
 
 risk: >
   Without pre-defined runbooks, incident response is improvised under pressure.

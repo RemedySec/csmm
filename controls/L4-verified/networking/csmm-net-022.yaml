@@ -10,7 +10,7 @@ description: >
   spoofing and cache poisoning. Enable Route53 Resolver query logging in all VPCs
   and ship logs to a centralized SIEM for anomaly detection (e.g., DNS tunneling,
   DGA domains). Implement Route53 Resolver DNS Firewall with managed threat
-  intelligence blocklists and custom blocklists derived from threat hunting.
+  intelligence blocklists. DNS Firewall must use AWS managed rule groups (AWSManagedDomainsMalwareDomainList, AWSManagedDomainsBotnetCommandandControl). Custom blocklists must be automatically updated from GuardDuty DNS findings via EventBridge rule within 24 hours of finding generation.
   DNS resolution for private hosted zones must not leak to public resolvers.
 
 risk: >

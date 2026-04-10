@@ -24,7 +24,7 @@ verification:
   - "Run: aws iam get-account-summary | jq '.SummaryMap.AccountMFAEnabled' — expected value is 1."
   - "Confirm AWS Config rule 'root-account-mfa-enabled' is enabled and reports COMPLIANT."
   - "Verify in the IAM console under Account Settings that the root MFA device type is listed as 'Hardware MFA device' (not 'Virtual MFA device')."
-  - "Document the physical location of the hardware token and confirm at least two authorized personnel have emergency access procedures in place."
+  - "Hardware token physical location is documented in the organization's asset registry. Emergency access runbook names at least 2 personnel and was last tested within 180 days."
   - "Set up a CloudWatch alarm on CloudTrail for any ConsoleLogin event by root without MFA, routing to PagerDuty or equivalent on-call system."
 
 compliance:

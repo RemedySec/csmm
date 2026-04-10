@@ -11,9 +11,10 @@ description: >
   (SecureString) and retrieved at runtime — never baked into container images,
   environment variables in task definitions, Lambda environment variables in
   plaintext, or committed to source code. Secrets must have automatic rotation
-  configured with rotation intervals appropriate to their classification.
-  Access to secrets must be scoped per-workload using IAM policies with
-  resource-level ARN conditions.
+  configured with rotation intervals: database credentials every 30 days or
+  less, API keys every 90 days or less, TLS certificates renewed at least
+  14 days before expiry. Access to secrets must be scoped per-workload using
+  IAM policies with resource-level ARN conditions.
 
 risk: >
   Hardcoded or statically configured secrets cannot be rotated without
@@ -27,7 +28,7 @@ risk: >
 verification:
   - "Scan all ECS task definitions, Lambda functions, and CloudFormation templates for plaintext secrets"
   - "Confirm all production secrets are stored in Secrets Manager with rotation enabled"
-  - "Verify rotation intervals: database credentials ≤ 30 days, API keys ≤ 90 days"
+  - "Verify rotation intervals: database credentials ≤ 30 days, API keys ≤ 90 days. Run: aws secretsmanager list-secrets --query 'SecretList[?RotationEnabled==`false`]' — result must be empty. Run: aws secretsmanager list-secrets and verify LastRotatedDate for each secret is within its configured rotation interval."
   - "Confirm IAM policies restrict secretsmanager:GetSecretValue to specific secret ARNs per workload"
   - "Validate that Secrets Manager access is logged via CloudTrail and anomalous access triggers alerts"
 

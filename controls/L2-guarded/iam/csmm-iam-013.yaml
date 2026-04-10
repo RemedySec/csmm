@@ -24,8 +24,8 @@ risk: >
 verification:
   - "Generate IAM credential report and confirm no active access keys exist for human users: aws iam generate-credential-report && aws iam get-credential-report"
   - "Verify all EC2 instances use instance profiles (IAM roles) instead of embedded access keys"
-  - "Confirm Lambda functions, ECS tasks, and EKS pods use execution roles rather than environment variable credentials"
-  - "Review CI/CD pipelines to ensure they use OIDC federation or IAM Roles Anywhere instead of stored access keys"
+  - "Run: aws lambda list-functions --query 'Functions[].Environment.Variables' and confirm no value matches pattern AKIA* or contains aws_secret_access_key. Run: aws ecs describe-task-definition for all active task definitions and confirm no environment or secrets entries contain static credentials."
+  - "Verify CI/CD runners use OIDC federation by confirming an IAM OIDC provider exists: aws iam list-open-id-connect-providers. Grep CI/CD configuration files for patterns matching AKIA or aws_secret — result must be empty."
 
 compliance:
   - framework: "CIS AWS Foundations"

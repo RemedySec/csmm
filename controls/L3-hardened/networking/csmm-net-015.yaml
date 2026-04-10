@@ -22,7 +22,8 @@ verification:
   - "List all internet-facing ALBs: aws elbv2 describe-load-balancers --query 'LoadBalancers[?Scheme==`internet-facing`]'"
   - "For each ALB, retrieve listener rules and confirm a default rule returns 403 unless a specific header matches the expected secret value"
   - "Attempt a direct curl request to the ALB DNS name without the secret header and confirm a 403 response"
-  - "Confirm the header secret is rotated periodically and stored in AWS Secrets Manager rather than hardcoded in CloudFront configuration"
+  - "Origin verification secret must be stored in Secrets Manager with automatic rotation enabled at an interval of 30 days or less. Verify: aws secretsmanager describe-secret --secret-id {origin-secret} --query 'RotationRules.AutomaticallyAfterDays' returns a value <= 30."
+  - "ALB listener rules must return HTTP 403 for requests missing the origin verification header. Test with: curl -s -o /dev/null -w '%{http_code}' https://{alb-dns} — must return 403."
 
 compliance:
   - framework: "SOC2"

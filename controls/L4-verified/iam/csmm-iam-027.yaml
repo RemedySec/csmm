@@ -6,13 +6,13 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  All privileged access to production environments must use a just-in-time (JIT)
-  access model where elevated permissions are granted temporarily via an approval
-  workflow with automatic expiration. Break-glass roles for emergency access must
-  require MFA, generate high-severity alerts, and have sessions limited to a
-  maximum of 4 hours. Implement using AWS SSO permission sets with session
-  duration limits, or STS AssumeRole with time-scoped session policies and
-  mandatory MFA conditions.
+  Zero IAM roles or SSO permission sets with AdministratorAccess or Action: '*' /
+  Resource: '*' policies may remain active for more than 4 hours. All administrative
+  access must use SSO permission sets with session duration set to 4 hours maximum,
+  or STS AssumeRole with a DurationSeconds of 14400 or less and an
+  aws:MultiFactorAuthPresent condition in the trust policy. Break-glass roles for
+  emergency access must require MFA, generate high-severity alerts, and have sessions
+  limited to a maximum of 4 hours.
 
 risk: >
   Standing privileged access to production creates a permanent high-value target.
@@ -23,11 +23,11 @@ risk: >
   generates visible alerts and requires human approval.
 
 verification:
-  - "Confirm no IAM role or SSO permission set grants persistent administrative access to production accounts"
+  - "Run: aws iam list-roles and inspect attached policies. Any role with Action: '*' on Resource: '*' must either (a) have tag RoleType=BreakGlass with aws:MultiFactorAuthPresent in its trust policy, or (b) be an SSO-managed role with MaxSessionDuration <= 14400."
   - "Verify JIT access requests are logged with requestor, approver, duration, and justification"
   - "Test that elevated sessions automatically expire after the configured duration (maximum 4 hours)"
   - "Confirm break-glass role assumption triggers a high-severity alert in the SIEM/PagerDuty"
-  - "Review JIT access logs for the past 30 days and confirm all sessions had valid approvals"
+  - "Query CloudTrail for sts:AssumeRole events on break-glass roles in the last 30 days. Each event must have a corresponding SNS notification within 5 minutes (verify via SNS delivery logs)."
 
 compliance:
   - framework: "SOC2"

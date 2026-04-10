@@ -10,10 +10,10 @@ description: >
   SIEM with cross-account, cross-region aggregation. At minimum: CloudTrail
   (management and data events), VPC Flow Logs, Route53 DNS query logs, GuardDuty
   findings, Security Hub findings, WAF logs, and application authentication logs.
-  Logs must be normalized into a common schema (e.g., OCSF) for correlation.
+  Logs must be normalized into OCSF schema, or a documented mapping to OCSF fields must exist.
   Retention must be tiered: hot storage (30 days) for active investigation,
   warm (90 days) for threat hunting, cold (1 year+) for compliance. The
-  architecture must support sub-minute query latency on hot data.
+  architecture must support query latency of 30 seconds or less for data from the last 30 days.
 
 risk: >
   Scattered logs across individual accounts, regions, and services make
@@ -26,8 +26,8 @@ risk: >
 verification:
   - "Confirm a centralized log destination (S3 + Athena, Security Lake, or third-party SIEM) receives logs from all accounts"
   - "Verify CloudTrail, VPC Flow Logs, DNS logs, GuardDuty, Security Hub, and WAF logs are all ingested"
-  - "Confirm log normalization into a common schema (OCSF or equivalent) is in place"
-  - "Test that a cross-account query returns results within 60 seconds for the last 30 days"
+  - "Confirm log normalization into OCSF schema is in place, or a documented mapping to OCSF fields exists"
+  - "Run a test query spanning 3 accounts for CloudTrail events from the last 24 hours and measure wall-clock time — must complete within 30 seconds"
   - "Verify tiered retention policies are configured (hot/warm/cold)"
 
 compliance:

@@ -9,8 +9,11 @@ description: >
   All AWS accounts in the organization must be continuously scanned for resources
   not registered in the approved asset inventory or not managed by IaC. AWS Config
   with a custom aggregator, AWS Resource Explorer, or a third-party CSPM tool must
-  identify untagged or untracked resources. Any resource missing required ownership
-  tags must be flagged and its account owner notified within 48 hours of creation.
+  identify untagged or untracked resources. All resources must have mandatory tags:
+  ManagedBy (value: terraform, cloudformation, or manual), Team, and Service.
+  Resources tagged ManagedBy=manual for more than 30 days without a linked migration
+  ticket fail. Any resource missing required tags must be flagged and its account
+  owner notified within 48 hours of creation.
 
 risk: >
   Unmanaged resources created outside approved change processes bypass security
@@ -20,7 +23,8 @@ risk: >
   only during incident response when it is too late to prevent data exposure.
 
 verification:
-  - "Run AWS Resource Explorer or Config aggregator query to identify resources missing required tags such as Owner, Environment, and ManagedBy"
+  - "Run AWS Config rule required-tags for tags ManagedBy, Team, Service — non-compliant count must be zero"
+  - "Query resources tagged ManagedBy=manual and verify none have been in that state for more than 30 days"
   - "Cross-reference discovered resources against the Terraform state inventory to identify resources with no IaC counterpart"
   - "Confirm an alerting rule exists in AWS Config or the CSPM tool that fires within 48 hours of a new untagged resource creation"
   - "Review the last 30 days of shadow IT alerts and confirm each was actioned with either tag remediation or resource termination"

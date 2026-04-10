@@ -8,8 +8,7 @@ severity_weight: 2
 description: >
   Network ACL outbound rules must not permit unrestricted egress to all
   destinations (0.0.0.0/0 or ::/0) on all ports (0-65535). Outbound traffic
-  should be restricted to explicitly approved destination CIDR ranges and port
-  ranges necessary for the workload, with a default DENY rule at the end of the
+  should be restricted to explicitly approved destination CIDR ranges. No outbound rule may use 0.0.0.0/0 combined with port range 0-65535. Individual rule port range width must not exceed 10 ports, except port 443 which may be open to 0.0.0.0/0 for HTTPS egress. A default DENY rule at the end of the
   rule set to block all other outbound traffic.
 
 risk: >
@@ -25,6 +24,7 @@ verification:
   - "Confirm each NACL has a final DENY ALL rule (rule number 32767 or equivalent) and that ALLOW rules specify narrow port ranges."
   - "Cross-reference with VPC Flow Logs to identify any unexpected outbound traffic patterns that suggest overly permissive rules in practice."
   - "Review NACLs for all subnets, including private subnets, as egress restrictions are equally important for internal workloads."
+  - "For each NACL, verify no outbound rule combines destination 0.0.0.0/0 with port range wider than 10 ports (exception: port 443)."
 
 compliance:
   - framework: "SOC2"

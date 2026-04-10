@@ -6,13 +6,16 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  Implement a structured KMS key hierarchy with separate CMKs per data
-  classification, per workload, and per environment. Key policies must follow
-  least privilege — only the owning workload's roles should have kms:Encrypt and
-  kms:Decrypt grants. Cross-account key sharing must use key grants (not broad
-  key policies) with GrantIsForAWSResource constraints. A central security
-  account must hold administrative key policies while workload accounts hold
-  usage grants only. Key deletion must require multi-party approval.
+  Implement a structured KMS key hierarchy with minimum KMS key separation:
+  one key per (Classification x Environment) pair. Key aliases must follow the
+  naming pattern alias/{env}-{classification}-{service}. Key policies must not
+  contain Principal: '*' or Principal: {AWS: 'arn:aws:iam::ACCOUNT:root'}.
+  Key policies must follow least privilege — only the owning workload's roles
+  should have kms:Encrypt and kms:Decrypt grants. Cross-account key sharing
+  must use key grants (not broad key policies) with GrantIsForAWSResource
+  constraints. A central security account must hold administrative key policies
+  while workload accounts hold usage grants only. Key deletion must require
+  multi-party approval.
 
 risk: >
   A single shared KMS key across workloads means that any role with decrypt
@@ -26,7 +29,7 @@ verification:
   - "Verify key policies restrict kms:Decrypt to the owning workload's execution roles only"
   - "Confirm cross-account key access uses grants with GrantIsForAWSResource, not wildcard key policies"
   - "Verify key deletion requires a waiting period of at least 14 days and triggers alerts"
-  - "Review key policy for any key and confirm no Principal: '*' or broad account-root access"
+  - "Retrieve all KMS key policies and verify none contain Principal: '*' or the account root ARN as a direct grantee. Key aliases must match the pattern alias/{env}-{classification}-{service}."
 
 compliance:
   - framework: "SOC2"

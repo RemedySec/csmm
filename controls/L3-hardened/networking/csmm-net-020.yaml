@@ -9,7 +9,7 @@ description: >
   All outbound internet traffic from VPCs must pass through a centralized egress
   inspection point — either AWS Network Firewall, a proxy fleet (e.g., Squid,
   Zscaler), or a third-party NGFW — with deny-by-default rules. Allowlisted
-  destinations must be domain-based (not IP-based) and scoped per workload.
+  destinations must be domain-based (not IP-based) and scoped per service, with each Network Firewall rule group tagged Service={name} to identify the workload it serves. Maximum 50 domain entries per rule group.
   Direct internet egress via NAT Gateway without inspection must be prohibited.
   DNS-based egress filtering via Route53 Resolver DNS Firewall must supplement
   network-layer controls.
@@ -26,7 +26,7 @@ verification:
   - "Confirm all VPC route tables direct 0.0.0.0/0 traffic through a centralized inspection VPC or firewall endpoint"
   - "Verify Network Firewall or proxy rules use deny-by-default with explicit domain allowlists per workload"
   - "Confirm Route53 Resolver DNS Firewall is enabled with blocklists for known malicious domains"
-  - "Test that a workload cannot reach an arbitrary external IP or domain not on the allowlist"
+  - "Test from a production instance: curl -s -o /dev/null -w '%{http_code}' https://example.com must return 000 or timeout (blocked). curl against an allowlisted domain must return 200."
   - "Verify egress filtering logs are shipped to SIEM for anomaly detection"
 
 compliance:

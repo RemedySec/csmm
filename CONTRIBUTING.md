@@ -25,14 +25,14 @@ Follow these steps to submit a new control for inclusion in CSMM:
 
 3. **Place the file in the correct directory** based on the control's level and pillar:
    ```
-   controls/<level>/<pillar>/<control-id>.yaml
+   controls/<level-dir>/<pillar>/<control-id>.yaml
    ```
-   For example: `controls/level-2/identity/iam-mfa-enforcement.yaml`
+   Level directories use the names: `L1-exposed`, `L2-guarded`, `L3-hardened`, `L4-verified`, `L5-autonomous`. Pillars are: `iam`, `networking`, `storage`, `compute`, `monitoring`. For example: `controls/L2-guarded/iam/csmm-iam-013.yaml`
 
 4. **Ensure your YAML includes all required fields:**
-   - `id` — unique control identifier (e.g., `IAM-L2-001`)
+   - `id` — unique control identifier (e.g., `csmm-iam-013`)
    - `name` — short, descriptive control name
-   - `level` — maturity level (1–4)
+   - `level` — maturity level (1–5)
    - `pillar` — the security pillar this control belongs to
    - `priority` — `critical`, `high`, `medium`, or `low`
    - `severity_weight` — numeric weight for scoring purposes
@@ -97,38 +97,43 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 When opening a PR for a new control, include a filled-out version of the schema below in your PR description:
 
 ```yaml
-id: PILLAR-L#-###                  # e.g., IAM-L2-001
+id: "csmm-<pillar>-<###>"          # e.g., csmm-iam-013
 name: ""                           # Short, descriptive name
-level: 1                           # Maturity level: 1, 2, 3, or 4
-pillar: ""                         # e.g., identity, network, data, logging
-priority: critical                 # critical | high | medium | low
-severity_weight: 10                # Numeric weight used in maturity scoring
+level: 1                           # Maturity level: 1, 2, 3, 4, or 5
+pillar: ""                         # iam | networking | storage | compute | monitoring
+priority: "critical"               # critical | high | medium | low
+severity_weight: 4                 # 4=critical, 3=high, 2=medium, 1=low
 
 description: >
-  Concise description of what the control requires.
-  Maximum three sentences. Use the appropriate modal verb
-  (must / should / consider) based on priority.
+  Concise description of what the control requires. Use specific
+  thresholds, tag names, or CLI commands rather than vague language
+  like "appropriate" or "periodically". Every control must produce
+  a clear pass/fail signal.
 
 risk: >
   Description of the business impact if this control is absent.
-  Focus on operational, financial, or reputational consequences.
+  Focus on operational, financial, or reputational consequences —
+  not just a restatement of the technical risk.
 
 verification:
-  - step: "Step 1 description"
-    tool: "aws-cli / gcloud / az / console / open-source-tool"
-    command: ""                    # Optional: exact command to run
-  - step: "Step 2 description"
-    tool: ""
-    command: ""
+  - "Run: aws <service> <command> --query '...' — result must be empty/zero/match-pattern"
+  - "Verify <specific resource> has <specific tag/property> set to <specific value>"
+  - "Test: <specific command or scenario> — expected output: <specific value>"
 
 compliance:
-  - framework: "CIS"              # e.g., CIS, NIST CSF, SOC 2, ISO 27001, PCI DSS
-    reference: ""                 # e.g., "CIS AWS Foundations 1.5"
-  - framework: "NIST CSF"
-    reference: ""                 # e.g., "PR.AC-1"
+  - framework: "CIS AWS Foundations"
+    control: "1.14"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-2(3)"
 
-notes: ""                         # Optional: additional context, exceptions, or links
-tags: []                          # Optional: e.g., [iam, mfa, authentication]
+references:
+  - "https://docs.aws.amazon.com/..."
+  - "https://docs.aws.amazon.com/..."
 ```
+
+**Verification step guidelines:** Each step must be a string that produces a clear pass/fail. Prefer concrete CLI commands (`aws ...`), specific tag/property checks, or testable scenarios over phrases like "confirm", "review", or "ensure". See [docs/iam-pillar.md](docs/iam-pillar.md) and existing controls in `controls/L3-hardened/` for examples.
 
 Thank you for helping make CSMM better for the entire cloud security community.

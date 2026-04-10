@@ -6,12 +6,12 @@ priority: "medium"
 severity_weight: 2
 
 description: >
-  All IAM policies must follow either Attribute-Based Access Control (ABAC) using
-  resource tags and session tags, or Role-Based Access Control (RBAC) using
-  purpose-specific IAM roles — not user-level inline policies. ABAC policies must
-  use aws:PrincipalTag and aws:ResourceTag conditions to scope access dynamically
-  based on project, environment, or team attributes. RBAC implementations must
-  define distinct roles per job function with no shared or generic roles.
+  Zero inline policies may be attached to IAM users — all access must be granted via
+  managed policies attached to IAM roles or groups. All managed policies must include
+  at least one tag-based condition key (aws:PrincipalTag, aws:ResourceTag, or
+  aws:RequestTag) OR be attached to a role following the naming pattern
+  {team}-{function}-role. All resources must carry mandatory tags: Team, Environment,
+  and Service.
 
 risk: >
   Without structured ABAC or RBAC patterns, access control devolves into per-user
@@ -22,10 +22,10 @@ risk: >
   surface during incidents.
 
 verification:
-  - "Audit all IAM policies for use of tag-based conditions (aws:PrincipalTag, aws:ResourceTag) or confirm role-per-function RBAC model is documented"
-  - "Verify no inline policies are attached directly to IAM users — all policies should be managed and attached to roles or groups"
-  - "Confirm a tagging strategy exists that defines mandatory tags (e.g., Environment, Team, Project) used in IAM policy conditions"
-  - "Review a sample of cross-team resource access to confirm ABAC conditions correctly restrict access by tag"
+  - "Run: aws iam list-users, then for each user run aws iam list-user-policies. Result must be empty for all users (zero inline policies)."
+  - "Run: aws iam list-attached-user-policies for all users. Result must be empty (all policies attached via roles or groups, not users)."
+  - "For all locally managed policies, retrieve the policy document and confirm it contains at least one Condition key from: aws:PrincipalTag, aws:ResourceTag, aws:RequestTag. Policies without conditions must be attached only to roles matching the naming pattern {team}-{function}-role."
+  - "Verify Tag Policy enforces mandatory tags Team, Environment, Service via: aws organizations describe-policy for all tag policies."
 
 compliance:
   - framework: "SOC2"

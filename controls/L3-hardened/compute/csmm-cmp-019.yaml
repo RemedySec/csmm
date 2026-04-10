@@ -6,9 +6,10 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  Implement a structured patch management process using SSM Patch Manager with
-  defined maintenance windows per environment (dev first, then staging, then
-  production). Critical security patches must be applied within 48 hours of
+  Implement a structured patch management process using SSM Patch Manager. SSM Patch
+  Manager maintenance windows must be configured per environment. Verify:
+  aws ssm describe-maintenance-windows returns at least one window per environment
+  (dev, staging, production). Critical security patches must be applied within 48 hours of
   release, high within 7 days, and medium within 30 days. Patch compliance must
   be tracked via SSM Compliance and reported on a dashboard. Instances that fall
   out of compliance must trigger alerts. For containers and serverless, base image
@@ -24,7 +25,8 @@ risk: >
 
 verification:
   - "Confirm SSM Patch Manager baselines are defined for all OS types in the fleet"
-  - "Verify maintenance windows are scheduled: dev (weekly), staging (bi-weekly), production (monthly with critical exceptions)"
+  - "Run: aws ssm describe-maintenance-windows and confirm windows exist for dev, staging, and production environments"
+  - "Run: aws ssm list-compliance-summaries and confirm patch compliance percentage is above 95%"
   - "Confirm patch compliance is above 95% across all managed instances"
   - "Verify critical patch SLA of 48 hours is met — check SSM Compliance for any instances with overdue critical patches"
   - "Confirm container base image rebuild pipeline triggers on upstream security updates"

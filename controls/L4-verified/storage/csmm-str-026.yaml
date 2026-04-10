@@ -9,9 +9,12 @@ description: >
   Implement a cross-region, cross-account backup architecture using AWS Backup
   with centrally managed backup policies. Production backups must be copied to
   a dedicated backup account in a separate region with vault lock (WORM) enabled.
-  Recovery procedures must be tested quarterly with documented RTO/RPO targets
-  per data classification. Backup completion, copy success, and restore test
-  results must be tracked in a dashboard with automated alerting on failures.
+  RPO/RTO targets by classification: Restricted — RPO 1 hour, RTO 4 hours.
+  Confidential — RPO 4 hours, RTO 8 hours. Internal — RPO 24 hours, RTO
+  24 hours. Quarterly restore tests must produce a report containing: test
+  date, resource restored, time to restore, and data integrity check result
+  (checksum match). Backup completion, copy success, and restore test results
+  must be tracked in a dashboard with automated alerting on failures.
 
 risk: >
   Backups stored in the same account as production data are vulnerable to the
@@ -25,7 +28,7 @@ verification:
   - "Confirm AWS Backup is configured with organization-level backup policies covering all production resources"
   - "Verify backup copies are sent to a separate backup account in a different region"
   - "Confirm vault lock is enabled on the backup account's vaults with a minimum retention of 90 days"
-  - "Review quarterly restore test results and confirm RTO/RPO targets were met"
+  - "Verify: aws backup list-restore-jobs --query 'RestoreJobs[?Status==`COMPLETED`]' shows at least one completed restore in the last 90 days per classification tier."
   - "Verify backup job failure alerts are configured and routed to the on-call team"
 
 compliance:

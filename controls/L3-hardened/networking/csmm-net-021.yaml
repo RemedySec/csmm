@@ -26,7 +26,7 @@ verification:
   - "Confirm Shield Advanced is enabled and all public-facing resources are enrolled"
   - "Verify WAF rate limiting rules exist on all ALB and API Gateway stages"
   - "Confirm CloudFront is deployed in front of all internet-facing origins"
-  - "Review DDoS response runbook and confirm SRT proactive engagement is authorized"
+  - "DDoS response runbook must exist at a documented path and contain: (1) escalation contacts with phone numbers, (2) Shield SRT engagement procedure, (3) WAF rate-limit override steps. Verify SRT authorization: aws shield describe-subscription --query 'Subscription.ProactiveEngagementStatus' must return ENABLED."
   - "Validate health checks are configured for Shield Advanced protected resources"
 
 compliance:

@@ -6,8 +6,10 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  EC2 instances must not be assigned public IPv4 addresses unless there is a documented
-  architectural requirement (e.g., a NAT instance, a VPN endpoint). All internet-facing
+  EC2 instances must not be assigned public IPv4 addresses unless explicitly required.
+  Instances with public IPs must be tagged PublicIPException=approved with ExceptionOwner
+  and ExceptionExpiry tags. Subnets or instances with public IPs and expired or missing
+  exception tags fail. Maximum 5% of the EC2 fleet may have public IPs. All internet-facing
   workloads must be fronted by an ALB, NLB, CloudFront, or API Gateway; the underlying EC2
   instances must sit in private subnets. Enforce at the subnet level by setting
   MapPublicIpOnLaunch to false (see csmm-net-004) and by explicitly setting
@@ -24,7 +26,8 @@ risk: >
 
 verification:
   - "Run: aws ec2 describe-instances | jq '[.Reservations[].Instances[] | select(.PublicIpAddress != null)] | length' — document and justify all non-zero results."
-  - "For any instance with a public IP, verify it is explicitly listed in a network architecture exception register with an approved business justification."
+  - "For any instance with a public IP, verify it is tagged PublicIPException=approved with valid ExceptionOwner and ExceptionExpiry tags. Instances with expired or missing exception tags fail."
+  - "Confirm that instances with public IPs represent no more than 5% of the total EC2 fleet."
   - "Confirm all EC2 launch templates have NetworkInterfaces[].AssociatePublicIpAddress set to false."
   - "Verify that security groups attached to instances with public IPs do not allow unrestricted inbound access on application ports — traffic must originate only from the load balancer security group."
   - "Confirm VPC Flow Logs are enabled for the VPC containing any instance with a public IP to provide traffic visibility."

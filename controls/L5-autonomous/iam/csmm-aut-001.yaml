@@ -7,7 +7,9 @@ severity_weight: 3
 
 description: >
   All Level 1 (Exposed) control violations must trigger automated remediation
-  within a defined response window, typically 15 minutes for critical findings.
+  within a maximum response window of 15 minutes, measured as the time between AWS
+  Config recording a non-compliant evaluation and the subsequent compliant
+  re-evaluation, for critical findings.
   Remediation actions must be implemented via AWS Config Remediation, Security Hub
   custom actions, or Lambda-backed EventBridge rules, and every automated action
   must be logged with before-and-after state to a tamper-evident audit log for
@@ -24,7 +26,7 @@ verification:
   - "List all AWS Config remediation configurations and confirm L1 control rules have automated remediation attached"
   - "Trigger a test L1 violation (e.g., enable public access on a test S3 bucket) and confirm auto-remediation fires within the SLA window"
   - "Review CloudTrail for the remediation Lambda or SSM automation execution and confirm state changes are logged"
-  - "Confirm a notification is sent to the infrastructure owner on every auto-remediation action taken"
+  - "Verify SNS topic for auto-remediation notifications exists and has zero failed deliveries: check CloudWatch metric NumberOfNotificationsFailed for the topic. All remediation actions must appear in CloudTrail with invokedBy showing config.amazonaws.com or lambda.amazonaws.com."
 
 compliance:
   - framework: "SOC2"

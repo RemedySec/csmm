@@ -6,14 +6,17 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  All container workloads must follow a layered security architecture: base images
-  sourced from a curated internal registry (not public Docker Hub), ECR image
+  All container workloads must follow a layered security architecture: all ECS task
+  definitions and EKS pod specs must reference images from ECR registries owned by
+  accounts listed in an approved account allowlist. ECR enhanced scanning must be
+  enabled on all repositories with scan-on-push. ECR image
   scanning enabled with critical/high findings blocking deployment, container images
   signed using Sigstore/cosign or AWS Signer with signature verification enforced
   at deploy time, and runtime security monitoring via GuardDuty ECS/EKS Runtime
   Monitoring. Containers must run as non-root users, with read-only root filesystems,
-  and no privileged mode or host namespace sharing unless explicitly approved with
-  a documented exception.
+  and no privileged mode or host namespace sharing. Exceptions must be tagged on the
+  image: SecurityException=approved with ExceptionExpiry={YYYY-MM-DD}. Images with
+  CRITICAL ECR scan findings cannot be deployed unless tagged with an active exception.
 
 risk: >
   Containers inherit the security posture of their base images. Public base images

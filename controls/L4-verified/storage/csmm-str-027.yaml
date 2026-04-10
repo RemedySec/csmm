@@ -6,12 +6,11 @@ priority: "medium"
 severity_weight: 2
 
 description: >
-  All S3 buckets storing compliance-relevant data (audit logs, financial records,
-  healthcare data, legal holds) must have Object Lock enabled in Compliance mode
-  with retention periods matching regulatory requirements. Object Lock prevents
-  any principal — including root — from deleting or overwriting objects during
-  the retention period. Governance mode may be used for non-regulatory data
-  where authorized overrides are acceptable with audit logging.
+  All S3 buckets tagged Classification=Restricted must have Object Lock enabled
+  in Compliance mode. CloudTrail log buckets must have Object Lock enabled
+  regardless of classification tag. Object Lock prevents any principal —
+  including root — from deleting or overwriting objects during the retention
+  period, with retention periods matching regulatory requirements.
 
 risk: >
   Without Object Lock, even well-intentioned administrators can accidentally
@@ -23,7 +22,7 @@ risk: >
 
 verification:
   - "Identify all buckets tagged with compliance-relevant classifications and confirm Object Lock is enabled"
-  - "Verify Object Lock mode is set to Compliance (not Governance) for regulatory data"
+  - "Buckets tagged Classification=Restricted must use Compliance mode. Buckets tagged Classification=Confidential may use Governance mode."
   - "Confirm retention periods align with regulatory requirements (e.g., 7 years for SOX, 6 years for HIPAA)"
   - "Test that an object within its retention period cannot be deleted, even by an administrator"
   - "Verify CloudTrail log bucket has Object Lock with Compliance mode enabled"

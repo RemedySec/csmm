@@ -8,8 +8,9 @@ severity_weight: 2
 description: >
   A CloudWatch metric filter and alarm must detect repeated console authentication
   failures by filtering CloudTrail ConsoleLogin events where responseElements.ConsoleLogin
-  is Failure. Multiple failed sign-in attempts within a short window may indicate
-  brute-force or credential-stuffing attacks targeting IAM users.
+  is Failure. The alarm triggers on 5 or more failed ConsoleLogin events within a
+  5-minute period from the same sourceIPAddress. Organizations may lower this threshold
+  but must not raise it above 5.
 
 risk: >
   Without monitoring for authentication failures, brute-force or credential-stuffing
@@ -19,7 +20,7 @@ risk: >
 
 verification:
   - "Verify the metric filter pattern filters on eventName = ConsoleLogin and responseElements.ConsoleLogin = Failure: aws logs describe-metric-filters --log-group-name <trail-log-group>"
-  - "Confirm the alarm threshold is set to a value appropriate for the organization (commonly >= 3 within a 5-minute period)"
+  - "Confirm the alarm triggers on 5 or more failed ConsoleLogin events within a 5-minute period from the same sourceIPAddress. Organizations may lower this threshold but must not raise it above 5."
   - "Verify an SNS action is attached with confirmed subscriptions"
   - "Review recent failed logins: aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=ConsoleLogin and filter for Failure responses"
   - "Cross-check with IAM Access Analyzer and GuardDuty IAMUser/AnomalousBehavior findings for correlated alerts"

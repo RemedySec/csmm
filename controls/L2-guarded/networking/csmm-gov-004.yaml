@@ -10,8 +10,7 @@ description: >
   with the organization management account configured as the GuardDuty
   delegated administrator so that new member accounts are automatically enrolled.
   GuardDuty findings must be aggregated to a central security account, and
-  high-severity findings must trigger automated alerting via EventBridge and SNS
-  within 15 minutes of detection.
+  findings with severity >= 7.0 must trigger an EventBridge rule that publishes to SNS within 5 minutes of finding creation.
 
 risk: >
   Without GuardDuty, there is no automated, ML-driven analysis of CloudTrail
@@ -28,6 +27,7 @@ verification:
   - "In the organization management or security tooling account, confirm aws guardduty list-members returns all expected member accounts as active."
   - "Verify auto-enable is configured for new accounts: aws guardduty describe-organization-configuration should show AutoEnable: true."
   - "Confirm an EventBridge rule is in place to route GuardDuty HIGH and CRITICAL severity findings to an SNS topic with an active subscription."
+  - "Test by running: aws guardduty create-sample-findings. Verify the EventBridge rule fires and SNS notification is delivered within 5 minutes."
 
 compliance:
   - framework: "SOC2"

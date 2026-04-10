@@ -6,11 +6,11 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  All IAM roles and policies must undergo a quarterly least privilege review using
-  IAM Access Analyzer policy generation and CloudTrail-based access activity data.
-  Permissions granted but not exercised within 90 days must be flagged for removal.
-  Use Access Analyzer's policy generation feature to create right-sized policies
-  based on actual usage, and replace overly broad policies with scoped-down versions.
+  IAM Access Analyzer unused access findings older than 90 days must be auto-escalated
+  via Security Hub to a ticket system with an assigned owner. Findings unresolved after
+  14 additional days trigger automatic policy scoping using Access Analyzer policy
+  generation to produce right-sized replacement policies. No IAM policy may grant
+  Action: '*' on Resource: '*' outside of roles tagged RoleType=BreakGlass.
 
 risk: >
   Permissions accumulate over time as teams request access for projects, migrations,
@@ -20,10 +20,10 @@ risk: >
   function requires.
 
 verification:
-  - "Confirm IAM Access Analyzer policy generation has been run for all high-privilege roles within the last 90 days"
-  - "Review Access Analyzer findings for unused permissions and confirm remediation tickets exist for each"
-  - "Verify that no IAM policy grants wildcard (*) actions on wildcard (*) resources outside of admin break-glass roles"
-  - "Check that a quarterly access review cadence is documented and last review was completed within 90 days"
+  - "Count Access Analyzer unused access findings older than 90 days: aws accessanalyzer list-findings — result must be zero or all must have linked tickets."
+  - "List all IAM policies: aws iam list-policies --scope Local and inspect each policy document. Zero policies may contain Action: '*' with Resource: '*' unless attached to a role tagged RoleType=BreakGlass."
+  - "Verify EventBridge rule exists that routes Access Analyzer findings to a ticket system (Jira, ServiceNow, or equivalent)."
+  - "Confirm at least one policy was auto-scoped in the last 90 days by checking Access Analyzer policy generation history."
 
 compliance:
   - framework: "SOC2"

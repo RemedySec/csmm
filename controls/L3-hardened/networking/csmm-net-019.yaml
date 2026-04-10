@@ -9,7 +9,7 @@ description: >
   All VPCs must use VPC endpoints (Gateway and Interface) to access AWS services
   without traversing the public internet. At minimum, deploy Gateway endpoints for
   S3 and DynamoDB, and Interface endpoints for KMS, STS, EC2, ECR, CloudWatch Logs,
-  Secrets Manager, and SSM in every VPC with workloads. Endpoint policies must
+  Secrets Manager, and SSM. Every VPC tagged Environment=production or Environment=staging must have Gateway endpoints for S3 and DynamoDB, and Interface endpoints for KMS, STS, ECR, SSM, and CloudWatch Logs. VPCs tagged Environment=development require S3 and STS endpoints at minimum. Endpoint policies must
   restrict access to resources within the organization using aws:PrincipalOrgID
   conditions. This is a foundational component of the data perimeter architecture.
 

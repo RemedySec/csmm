@@ -7,8 +7,10 @@ severity_weight: 3
 
 description: >
   All data stores (S3 buckets, RDS instances, DynamoDB tables, EFS file systems,
-  EBS volumes) must be tagged with a mandatory data classification label
-  (e.g., Public, Internal, Confidential, Restricted) and a data owner tag.
+  EBS volumes) must be tagged with mandatory tag Classification with value from
+  the set: Public, Internal, Confidential, Restricted, and mandatory tag
+  DataOwner containing a valid team name. Tag Policies must enforce these as
+  mandatory. Resources missing either tag for more than 7 days fail this control.
   Classification drives automated policy enforcement — encryption key selection,
   backup frequency, access controls, and retention periods must vary by
   classification. Use AWS Config rules or Tag Policies to enforce mandatory tags
@@ -26,7 +28,7 @@ verification:
   - "Confirm Tag Policies enforce mandatory Classification and DataOwner tags on all storage resources"
   - "Verify AWS Config rules flag resources missing classification tags as non-compliant"
   - "Confirm Amazon Macie is enabled and running scheduled discovery jobs on all S3 buckets"
-  - "Validate that encryption, backup, and access policies vary by classification level"
+  - "Verify policy enforcement per classification: Restricted requires CMK encryption, Object Lock, and cross-account backup. Confidential requires CMK encryption and versioning. Internal requires SSE-S3 encryption at minimum. Public has no additional encryption requirement. Run AWS Config rule required-tags and confirm zero non-compliant resources."
   - "Review a sample of Restricted-classified resources and confirm access is scoped to authorized roles only"
 
 compliance:

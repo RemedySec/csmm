@@ -24,7 +24,7 @@ risk: >
 verification:
   - "Run: aws ec2 describe-subnets | jq '[.Subnets[] | select(.MapPublicIpOnLaunch == true)] | length' — expected 0 in production environments."
   - "Confirm AWS Config rule 'subnet-auto-assign-public-ip-disabled' is ENABLED and reports COMPLIANT across all regions."
-  - "For any subnet where public IP assignment is a hard requirement, confirm the exception is documented with a business justification and reviewed quarterly."
+  - "For any subnet where public IP assignment is a hard requirement: Subnets with MapPublicIpOnLaunch=true must have tags: PublicIPException=approved, ExceptionOwner={team}, ExceptionExpiry={YYYY-MM-DD}. Subnets with expired or missing exception tags that have MapPublicIpOnLaunch=true fail this control."
   - "Verify that Terraform modules for VPC provisioning set map_public_ip_on_launch = false by default, and tfsec or Checkov rules flag any override."
 
 compliance:

@@ -23,7 +23,7 @@ verification:
   - "Confirm an organization-level analyzer exists: aws accessanalyzer list-analyzers --query 'analyzers[?type==`ORGANIZATION`]'"
   - "Verify analyzers are enabled in all active regions by iterating across each region"
   - "Check Security Hub integration is active and Access Analyzer findings appear in the Security Hub console"
-  - "Review open findings older than 30 days and confirm they have assigned owners and remediation timelines"
+  - "Count Access Analyzer findings with severity HIGH or CRITICAL that are older than 30 days and do not have Security Hub workflow status RESOLVED — count must be zero."
 
 compliance:
   - framework: "SOC2"

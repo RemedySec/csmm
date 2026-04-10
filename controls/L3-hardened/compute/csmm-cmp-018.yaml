@@ -6,12 +6,13 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  Workloads must be isolated based on data classification and trust level using
-  the strongest isolation boundary appropriate: separate AWS accounts for different
-  trust levels, Fargate for multi-tenant workloads (kernel-level isolation via
-  Firecracker), dedicated EKS node groups or Fargate profiles per namespace for
-  Kubernetes, and separate VPCs for workloads with different security requirements.
-  Shared EC2 instances must not host workloads from different trust levels.
+  Workloads tagged Classification=Restricted must run on Fargate or dedicated EC2
+  hosts (tenancy=dedicated). Confidential workloads must not share EC2 instances
+  with Internal or Public workloads. EKS clusters must use separate node groups per
+  Classification tag value. Workloads must be isolated using the strongest isolation
+  boundary appropriate: separate AWS accounts for different trust levels, Fargate
+  for multi-tenant workloads (kernel-level isolation via Firecracker), and separate
+  VPCs for workloads with different security requirements.
   Service mesh (e.g., App Mesh) or network policies must enforce workload-to-workload
   authentication and authorization.
 

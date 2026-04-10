@@ -6,10 +6,11 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  All AWS KMS Customer Managed Keys (CMKs) used for data encryption must have
-  automatic key rotation enabled with a rotation period not exceeding 365 days.
-  Key rotation ensures that a new cryptographic key material is generated annually
-  while AWS transparently re-wraps existing data keys, requiring no application changes.
+  Every KMS CMK where KeyUsage is ENCRYPT_DECRYPT (as returned by aws kms
+  describe-key) must have automatic annual rotation enabled. Keys with KeyUsage
+  SIGN_VERIFY or GENERATE_VERIFY_MAC are excluded. Key rotation ensures that
+  new cryptographic key material is generated annually while AWS transparently
+  re-wraps existing data keys, requiring no application changes.
 
 risk: >
   Long-lived encryption keys increase the blast radius if key material is ever exposed

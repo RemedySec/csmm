@@ -7,9 +7,12 @@ severity_weight: 3
 
 description: >
   All non-administrative IAM roles must have a permission boundary policy attached
-  that restricts the maximum effective permissions the role can exercise. Permission
-  boundaries act as a hard ceiling regardless of what identity-based policies grant,
-  preventing privilege escalation through role assumption chains.
+  that restricts the maximum effective permissions the role can exercise. A role is
+  classified as administrative if it is tagged RoleType=Admin. All roles without this
+  tag must have a permission boundary attached. Administrative roles must be limited
+  to fewer than 5 per account. Permission boundaries act as a hard ceiling regardless
+  of what identity-based policies grant, preventing privilege escalation through role
+  assumption chains.
 
 risk: >
   Without permission boundaries, any non-admin role that can create or modify IAM
@@ -19,7 +22,7 @@ risk: >
 
 verification:
   - "List all IAM roles: aws iam list-roles --query 'Roles[*].{Name:RoleName,Boundary:PermissionsBoundary}'"
-  - "Filter roles missing a permission boundary and confirm none are non-admin roles"
+  - "Filter roles missing PermissionsBoundary. For each, check for tag RoleType=Admin. Any role without a boundary AND without RoleType=Admin tag fails. Verify admin role count per account is fewer than 5."
   - "For each role with a boundary, verify the boundary policy explicitly denies iam:CreatePolicy, iam:AttachRolePolicy, and iam:PutRolePolicy"
   - "Confirm boundary policies are managed centrally and not modifiable by role owners"
 

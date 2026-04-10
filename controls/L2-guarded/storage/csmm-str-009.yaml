@@ -6,11 +6,9 @@ priority: "high"
 severity_weight: 3
 
 description: >
-  S3 versioning must be enabled on all buckets that store business-critical,
-  compliance-relevant, or sensitive data. Versioning must not be suspended on
-  any bucket that previously had it enabled. For buckets containing audit logs
-  or backups, versioning must be combined with S3 Object Lock to prevent
-  version deletion as well.
+  All S3 buckets must have versioning status Enabled. Buckets with status
+  Suspended fail regardless of history. Buckets tagged Classification=Audit
+  or Classification=Backup must additionally have Object Lock enabled.
 
 risk: >
   Without versioning, a single accidental or malicious s3:DeleteObject or

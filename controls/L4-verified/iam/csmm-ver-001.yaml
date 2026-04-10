@@ -24,7 +24,7 @@ verification:
   - "Review CI/CD pipeline definitions for all IaC repositories and confirm a security scanning step exists that runs on every pull request"
   - "Trigger a test PR containing a known misconfiguration (e.g., an S3 bucket with public access) and confirm the pipeline fails and blocks merge"
   - "Review the scanner configuration to confirm HIGH and CRITICAL checks are set to fail the build rather than warn"
-  - "Confirm scan results are published as PR comments or to a security findings dashboard for developer visibility"
+  - "Verify branch protection requires the IaC scan status check: gh api repos/{owner}/{repo}/branches/main --jq '.protection.required_status_checks.contexts' must include the scan step name. Exceptions require a PR approval from a user with the security-reviewer team membership."
 
 compliance:
   - framework: "SOC2"
