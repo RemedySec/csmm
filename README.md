@@ -138,15 +138,15 @@ Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](sel
 
 ## How CSMM Compares
 
-| | CIS Benchmarks | AWS SMM v2 | NIST CSF | Prowler | **CSMM** |
-|---|---|---|---|---|---|
-| Type | Checklist | Phases | Framework | Scanner | Maturity model |
-| Levels | None | 4 phases | 4 tiers | None | 5 levels (gated) |
-| Scoring | Pass/fail | None | None | 0–100 (compliance) | 0–100 (maturity) |
-| Scores architecture & process | No | Partially | No | No | **Yes (L3–L5)** |
-| Open source | No (free PDF) | No (AWS-owned) | Yes | Partial | Yes (Apache 2.0) |
-| Progression path | No | Yes | No | No | Yes (leveled) |
-| Community-owned | No | No | No | Partial | Yes |
+| | CIS Benchmarks | AWS SMM v2 | NIST CSF | **CSMM** |
+|---|---|---|---|---|
+| Type | Checklist | Phases | Framework | Maturity model |
+| Levels | None | 4 phases | 4 tiers | 5 levels (gated) |
+| Scoring | Pass/fail | None | None | 0–100 (maturity) |
+| Scores architecture & process | No | Partially | No | **Yes (L3–L5)** |
+| Open source | No (free PDF) | No (AWS-owned) | Yes | Yes (Apache 2.0) |
+| Progression path | No | Yes | No | Yes (leveled) |
+| Community-owned | No | No | No | Yes |
 
 ---
 
