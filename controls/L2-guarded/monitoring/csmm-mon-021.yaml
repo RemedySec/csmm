@@ -1,7 +1,7 @@
-id: "csmm-gov-001"
+id: "csmm-mon-021"
 name: "CloudTrail Enabled in All Regions"
 level: 2
-pillar: "iam"
+pillar: "monitoring"
 priority: "critical"
 severity_weight: 4
 

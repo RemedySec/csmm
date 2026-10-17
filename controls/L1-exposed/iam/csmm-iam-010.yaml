@@ -1,0 +1,41 @@
+id: "csmm-iam-010"
+name: "No IAM Role Trust Policy with Wildcard Principal and No Condition"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  No IAM role trust policy may specify a wildcard principal ("Principal": "*") without a
+  restrictive condition (e.g. aws:PrincipalOrgID, aws:PrincipalAccount, or sts:ExternalId).
+  A trust policy with an unconditioned wildcard principal allows any AWS identity — including
+  identities outside your organization — to assume the role. All such roles must be remediated
+  by adding a condition that scopes trust to known, controlled principals.
+
+risk: >
+  A role with "Principal": "*" and no condition is effectively public — any authenticated AWS
+  identity in any account can assume it. Attackers with any valid AWS credentials, including
+  credentials from unrelated compromised accounts, can assume the role and gain whatever
+  permissions it carries. This is a direct path to account compromise that requires no
+  exploitation of your own credentials. It is consistently among the highest-severity findings
+  in cloud security assessments.
+
+verification:
+  - "Run: aws iam list-roles | jq '[.Roles[] | select(.AssumeRolePolicyDocument.Statement[].Principal == \"*\" and (.AssumeRolePolicyDocument.Statement[].Condition == null or .AssumeRolePolicyDocument.Statement[].Condition == {})) | .RoleName]' — expect empty array."
+  - "Enable AWS Config rule 'iam-role-managed-policy-check' and supplement with a custom Config rule or Security Hub custom insight to detect wildcard-principal trust policies without conditions."
+  - "Review all roles flagged by IAM Access Analyzer for external access findings — a wildcard unconditioned trust policy will surface as a critical external access finding."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "N/A"
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-custom.html"

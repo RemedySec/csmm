@@ -1,0 +1,41 @@
+id: "csmm-iam-017"
+name: "No Unused IAM Roles (Not Assumed in 90 Days)"
+level: 2
+pillar: "iam"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  Any IAM role that has not been assumed in the last 90 days must be reviewed and either
+  justified with documented business purpose or deleted. Use IAM Last Used data
+  (GetRole / GenerateServiceLastAccessedDetails) to identify stale roles. Roles that
+  pre-date the 90-day window and have no recorded last-used date should be treated as
+  unused unless actively justified.
+
+risk: >
+  Unused roles represent standing attack surface with no operational value. An attacker who
+  gains the ability to assume roles — through a misconfigured trust policy, a compromised
+  CI/CD pipeline, or a privilege escalation path — has more options the more unused roles
+  exist. Unused roles also accumulate permissions over time as policies are added and never
+  cleaned up, making blast radius analysis inaccurate. Removing them reduces the exploitable
+  attack surface with zero operational cost.
+
+verification:
+  - "Run: aws iam list-roles | jq '.Roles[].RoleName' | xargs -I{} aws iam get-role --role-name {} | jq 'select(.Role.RoleLastUsed.LastUsedDate == null or (.Role.RoleLastUsed.LastUsedDate | fromdateiso8601) < (now - 7776000)) | .Role.RoleName' — review all results."
+  - "Use IAM Access Analyzer or AWS Config with a custom rule to continuously flag roles with no last-used date or last-used date older than 90 days."
+  - "Confirm a role lifecycle process exists: roles created for temporary purposes (projects, migrations) have documented expiry dates and are deleted when the purpose ends."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "N/A"
+  - framework: "SOC2"
+    control: "CC6.2"
+  - framework: "NIST 800-53"
+    control: "AC-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_delete.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#remove-credentials"

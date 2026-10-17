@@ -1,41 +1,38 @@
 id: "csmm-iam-018"
-name: "Periodic Least Privilege Access Review"
+name: "Permission Boundaries on All Non-Admin Roles"
 level: 3
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  IAM Access Analyzer unused access findings older than 90 days must be auto-escalated
-  via Security Hub to a ticket system with an assigned owner. Findings unresolved after
-  14 additional days trigger automatic policy scoping using Access Analyzer policy
-  generation to produce right-sized replacement policies. No IAM policy may grant
-  Action: '*' on Resource: '*' outside of roles tagged RoleType=BreakGlass.
+  All non-administrative IAM roles must have a permission boundary policy attached
+  that restricts the maximum effective permissions the role can exercise. A role is
+  classified as administrative if it is tagged RoleType=Admin. All roles without this
+  tag must have a permission boundary attached. Administrative roles must be limited
+  to fewer than 5 per account. Permission boundaries act as a hard ceiling regardless
+  of what identity-based policies grant, preventing privilege escalation through role
+  assumption chains.
 
 risk: >
-  Permissions accumulate over time as teams request access for projects, migrations,
-  and incidents but rarely relinquish them afterward. This privilege creep creates
-  an ever-expanding blast radius — a compromised role with months of accumulated
-  unused permissions grants attackers far broader access than the role's current
-  function requires.
+  Without permission boundaries, any non-admin role that can create or modify IAM
+  policies can escalate its own privileges to full administrative access. This creates
+  an implicit privilege escalation path that is difficult to detect through policy
+  reviews alone and can be exploited by compromised application credentials.
 
 verification:
-  - "Count Access Analyzer unused access findings older than 90 days: aws accessanalyzer list-findings — result must be zero or all must have linked tickets."
-  - "List all IAM policies: aws iam list-policies --scope Local and inspect each policy document. Zero policies may contain Action: '*' with Resource: '*' unless attached to a role tagged RoleType=BreakGlass."
-  - "Verify EventBridge rule exists that routes Access Analyzer findings to a ticket system (Jira, ServiceNow, or equivalent)."
-  - "Confirm at least one policy was auto-scoped in the last 90 days by checking Access Analyzer policy generation history."
+  - "List all IAM roles: aws iam list-roles --query 'Roles[*].{Name:RoleName,Boundary:PermissionsBoundary}'"
+  - "Filter roles missing PermissionsBoundary. For each, check for tag RoleType=Admin. Any role without a boundary AND without RoleType=Admin tag fails. Verify admin role count per account is fewer than 5."
+  - "For each role with a boundary, verify the boundary policy explicitly denies iam:CreatePolicy, iam:AttachRolePolicy, and iam:PutRolePolicy"
+  - "Confirm boundary policies are managed centrally and not modifiable by role owners"
 
 compliance:
   - framework: "SOC2"
     control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-6(7)"
-  - framework: "ISO 27001"
-    control: "A.9.2.5"
-  - framework: "AWS Well-Architected"
-    control: "SEC 03 — How do you manage permissions for people and machines?"
+    control: "AC-6(1)"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html"
   - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  - "https://aws.amazon.com/blogs/security/when-and-how-to-use-aws-iam-permission-boundaries/"

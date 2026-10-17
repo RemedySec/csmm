@@ -1,4 +1,4 @@
-id: "csmm-iam-010"
+id: "csmm-iam-015"
 name: "Deny CloudTrail Disable via SCP"
 level: 2
 pillar: "iam"

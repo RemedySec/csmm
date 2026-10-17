@@ -1,7 +1,7 @@
-id: "csmm-gov-002"
+id: "csmm-mon-022"
 name: "CloudTrail Log File Validation"
 level: 2
-pillar: "iam"
+pillar: "monitoring"
 priority: "high"
 severity_weight: 3
 

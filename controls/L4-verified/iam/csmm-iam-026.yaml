@@ -1,37 +1,38 @@
 id: "csmm-iam-026"
-name: "IAM Access Analyzer Enabled"
+name: "IaC Scanned in CI/CD Before Merge"
 level: 4
 pillar: "iam"
-priority: "high"
-severity_weight: 3
+priority: "critical"
+severity_weight: 4
 
 description: >
-  AWS IAM Access Analyzer must be enabled in every AWS region where resources are
-  deployed, with an organization-level analyzer configured at the management account
-  to provide cross-account visibility. Access Analyzer must be integrated with
-  Security Hub to centralize findings, and active findings must be reviewed and
-  resolved within defined SLA windows based on finding severity.
+  All Infrastructure-as-Code pull requests must pass automated security scanning
+  before merging to the main branch. Scanning must cover static analysis for
+  misconfigurations (e.g., tfsec, Checkov, or Snyk IaC) and policy-as-code
+  evaluation (e.g., OPA or Sentinel). The CI/CD pipeline must be configured to
+  block merge on any HIGH or CRITICAL severity finding without an explicit approval
+  exception documented in the change management system.
 
 risk: >
-  Without continuous access analysis, overprivileged policies and externally shared
-  resources such as S3 buckets, KMS keys, IAM roles, and Lambda functions go
-  undetected until a breach occurs. Access Analyzer findings frequently reveal
-  unintended cross-account access granted during infrastructure changes that would
-  otherwise persist indefinitely without automated detection.
+  Unscanned IaC changes deploy misconfigurations directly to production environments
+  where they may persist until the next audit cycle. Unlike application code where
+  runtime errors are often immediately visible, infrastructure misconfigurations such
+  as open security groups, disabled encryption, or excessive IAM permissions can
+  remain silent and exploitable for months without proactive detection in the pipeline.
 
 verification:
-  - "Confirm an organization-level analyzer exists: aws accessanalyzer list-analyzers --query 'analyzers[?type==`ORGANIZATION`]'"
-  - "Verify analyzers are enabled in all active regions by iterating across each region"
-  - "Check Security Hub integration is active and Access Analyzer findings appear in the Security Hub console"
-  - "Count Access Analyzer findings with severity HIGH or CRITICAL that are older than 30 days and do not have Security Hub workflow status RESOLVED — count must be zero."
+  - "Review CI/CD pipeline definitions for all IaC repositories and confirm a security scanning step exists that runs on every pull request"
+  - "Trigger a test PR containing a known misconfiguration (e.g., an S3 bucket with public access) and confirm the pipeline fails and blocks merge"
+  - "Review the scanner configuration to confirm HIGH and CRITICAL checks are set to fail the build rather than warn"
+  - "Verify branch protection requires the IaC scan status check: gh api repos/{owner}/{repo}/branches/main --jq '.protection.required_status_checks.contexts' must include the scan step name. Exceptions require a PR approval from a user with the security-reviewer team membership."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC8.1"
   - framework: "NIST 800-53"
-    control: "AC-6"
+    control: "SA-11"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-getting-started.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-providers.html"
+  - "https://www.checkov.io/1.Welcome/Quick%20Start.html"
+  - "https://docs.aws.amazon.com/codepipeline/latest/userguide/tutorials.html"
+  - "https://developer.hashicorp.com/sentinel/docs/concepts/policy-as-code"

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSMM — IAM Score Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #12121a;
+  --border: #1e1e2e;
+  --text: #e4e4ef;
+  --muted: #8888a0;
+  --l1: #e94560;
+  --l2: #a855f7;
+  --l3: #3b82f6;
+  --l4: #14b8a6;
+  --l5: #f59e0b;
+  --pass: #16a34a;
+  --pass-bg: rgba(22, 163, 74, 0.12);
+  --fail: #dc2626;
+  --fail-bg: rgba(220, 38, 38, 0.12);
+  --gated: #2a2a3a;
+  --gated-text: #44445a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Header --- */
+.header {
+  padding: 32px 32px 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 24px;
+}
+.header-left h1 {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.header-left h1 span { color: var(--l1); }
+.header-left p { font-size: 13px; color: var(--muted); }
+
+/* --- Score Summary --- */
+.score-summary {
+  display: flex; align-items: center; gap: 32px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 28px;
+}
+.score-main {
+  text-align: center;
+}
+.score-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 48px; font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+.score-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-top: 4px;
+}
+.score-divider {
+  width: 1px; height: 60px;
+  background: var(--border);
+}
+.score-levels { display: flex; flex-direction: column; gap: 6px; }
+.score-level-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px;
+}
+.score-level-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px;
+  color: #fff; min-width: 28px; text-align: center;
+}
+.score-level-bar-wrap {
+  width: 120px; height: 6px;
+  background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.score-level-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.score-level-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--muted);
+  min-width: 36px;
+}
+.score-level-gate {
+  font-size: 10px; color: var(--muted);
+  background: var(--border); padding: 1px 6px; border-radius: 3px;
+}
+
+/* --- Hint --- */
+.hint {
+  margin: 16px 32px 0;
+  font-size: 12px; color: var(--muted);
+  font-style: italic;
+}
+
+/* --- Matrix --- */
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 20px 32px 40px;
+}
+
+/* --- Column --- */
+.col-header {
+  border-radius: 8px 8px 0 0;
+  padding: 12px 10px;
+  text-align: center;
+  color: #fff;
+  font-weight: 700; font-size: 15px;
+}
+.col-header .col-sub {
+  display: block; font-size: 10px;
+  font-weight: 500; opacity: 0.85; margin-top: 2px;
+}
+.col-header .col-score {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 700; margin-top: 6px;
+}
+.col-header .col-gated-label {
+  display: block; font-size: 10px; margin-top: 4px;
+  opacity: 0.7; font-weight: 500;
+}
+.col-l1 .col-header { background: var(--l1); }
+.col-l2 .col-header { background: var(--l2); }
+.col-l3 .col-header { background: var(--l3); }
+.col-l4 .col-header { background: var(--l4); }
+.col-l5 .col-header { background: var(--l5); color: #000; }
+.col-l5 .col-header .col-gated-label { color: #000; }
+
+.col-body { display: flex; flex-direction: column; gap: 6px; }
+
+/* --- Control Card --- */
+.ctrl {
+  border-radius: 6px;
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  position: relative;
+  user-select: none;
+}
+.ctrl.passing {
+  background: var(--pass-bg);
+  border-color: rgba(22, 163, 74, 0.3);
+}
+.ctrl.failing {
+  background: var(--fail-bg);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+.ctrl.gated {
+  background: rgba(42, 42, 58, 0.4);
+  border-color: var(--gated);
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.ctrl:not(.gated):hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+.ctrl-top {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 6px;
+  margin-bottom: 4px;
+}
+.ctrl-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--muted);
+}
+.ctrl-sev {
+  font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.sev-critical { background: rgba(220, 38, 38, 0.2); color: #f87171; }
+.sev-high     { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+.sev-medium   { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+.sev-low      { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+
+.ctrl-name {
+  font-size: 11px; font-weight: 600;
+  line-height: 1.35; margin-bottom: 5px;
+  color: var(--text);
+}
+.gated .ctrl-name { color: var(--gated-text); }
+
+.ctrl-contrib {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ctrl-contrib .contrib-val { font-weight: 600; }
+.ctrl-contrib .contrib-label { color: var(--muted); font-size: 9px; }
+.passing .contrib-val { color: #4ade80; }
+.failing .contrib-val { color: #f87171; }
+.gated .contrib-val  { color: var(--gated-text); }
+
+.ctrl-status {
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.passing .ctrl-status { color: #4ade80; }
+.failing .ctrl-status { color: #f87171; }
+.gated   .ctrl-status { color: var(--gated-text); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>CSMM — <span>IAM</span> Score Matrix</h1>
+    <p>Click any control to toggle pass / fail. Score updates live.</p>
+  </div>
+  <div class="score-summary">
+    <div class="score-main">
+      <div class="score-number" id="iam-score">—</div>
+      <div class="score-label">IAM Pillar Score</div>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-levels" id="level-bars"></div>
+  </div>
+</div>
+
+<p class="hint">Green = passing &nbsp;·&nbsp; Red = failing &nbsp;·&nbsp; Dimmed = gated (unlock the level below first) &nbsp;·&nbsp; % shown is this control's contribution to the IAM score</p>
+
+<div class="matrix" id="matrix"></div>
+
+<script>
+const LEVELS = [
+  { key: 'L1', name: 'Exposed',   weight: 0.35, color: '#e94560', textColor: '#fff' },
+  { key: 'L2', name: 'Guarded',   weight: 0.25, color: '#a855f7', textColor: '#fff' },
+  { key: 'L3', name: 'Hardened',  weight: 0.20, color: '#3b82f6', textColor: '#fff' },
+  { key: 'L4', name: 'Verified',  weight: 0.12, color: '#14b8a6', textColor: '#fff' },
+  { key: 'L5', name: 'Autonomous',weight: 0.08, color: '#f59e0b', textColor: '#000' },
+]
+
+// severity: 4=critical, 3=high, 2=medium, 1=low
+const CONTROLS = {
+  L1: [
+    { id:'iam-001', name:'MFA for All Console Users',           sev:4, passing:true  },
+    { id:'iam-002', name:'No Root Account Access Keys',         sev:4, passing:true  },
+    { id:'iam-003', name:'Root MFA with Hardware Token',        sev:4, passing:true  },
+    { id:'iam-004', name:'No IAM Users — Use SSO',             sev:3, passing:true  },
+    { id:'iam-005', name:'Rotate Access Keys (90d)',            sev:3, passing:true  },
+    { id:'iam-006', name:'Remove Unused Credentials (45d)',     sev:3, passing:false },
+    { id:'iam-007', name:'Password Policy 14+ Characters',      sev:2, passing:true  },
+    { id:'iam-008', name:'Deny Root Usage via SCP',             sev:4, passing:true  },
+    { id:'iam-009', name:'No Direct User Policy Attachments',   sev:2, passing:false },
+    { id:'iam-010', name:'No Wildcard Principal in Trust',      sev:4, passing:true  },
+    { id:'iam-011', name:'No Wildcard Action + Resource',       sev:4, passing:false },
+  ],
+  L2: [
+    { id:'iam-012', name:'MFA for Sensitive Actions (SCP)',     sev:3, passing:true  },
+    { id:'iam-013', name:'Restrict Regions via SCP',            sev:3, passing:true  },
+    { id:'iam-014', name:'Enforce Temporary Credentials',       sev:3, passing:false },
+    { id:'iam-015', name:'Deny CloudTrail Disable (SCP)',       sev:3, passing:true  },
+    { id:'iam-016', name:'Deny Leaving Organization (SCP)',     sev:3, passing:true  },
+    { id:'iam-017', name:'No Unused Roles (90d)',               sev:2, passing:false },
+    { id:'iam-029', name:'OIDC Trust Scoped to Specific Subjects', sev:4, passing:false },
+  ],
+  L3: [
+    { id:'iam-018', name:'Permission Boundaries on Non-Admin',  sev:3, passing:false },
+    { id:'iam-019', name:'Deny IAM Admin via Boundary',         sev:3, passing:false },
+    { id:'iam-020', name:'Enforce ABAC/RBAC Access Patterns',   sev:2, passing:false },
+    { id:'iam-021', name:'Periodic Least Privilege Review',     sev:3, passing:false },
+    { id:'iam-022', name:'Cross-Account IAM Trust Controls',    sev:3, passing:false },
+    { id:'iam-023', name:'IAM Data Perimeter Controls',         sev:3, passing:false },
+  ],
+  L4: [
+    { id:'iam-024', name:'IAM Access Analyzer Enabled',         sev:3, passing:false },
+    { id:'iam-025', name:'Temporary Elevated Access (JIT)',      sev:3, passing:false },
+    { id:'iam-026', name:'IaC Scanned in CI/CD',                sev:3, passing:false },
+  ],
+  L5: [
+    { id:'iam-027', name:'Auto-Remediation for L1 Controls',    sev:3, passing:false },
+    { id:'iam-028', name:'Policy Drift Auto-Reverted',          sev:3, passing:false },
+  ],
+}
+
+const SEV_LABEL = { 4:'Critical', 3:'High', 2:'Medium', 1:'Low' }
+const SEV_CLASS = { 4:'sev-critical', 3:'sev-high', 2:'sev-medium', 1:'sev-low' }
+
+function levelTotals(key) {
+  return CONTROLS[key].reduce((s, c) => s + c.sev, 0)
+}
+
+function levelScore(key) {
+  const total   = levelTotals(key)
+  const passing = CONTROLS[key].filter(c => c.passing).reduce((s, c) => s + c.sev, 0)
+  return total === 0 ? 0 : (passing / total) * 100
+}
+
+function computeScores() {
+  const scores = {}
+  let prevPassed = true
+  for (const lvl of LEVELS) {
+    const score = levelScore(lvl.key)
+    const gated = !prevPassed
+    scores[lvl.key] = { score, gated }
+    if (!gated && score < 80) prevPassed = false
+  }
+  return scores
+}
+
+function iamScore(scores) {
+  return LEVELS.reduce((total, lvl) => {
+    const { score, gated } = scores[lvl.key]
+    return total + (gated ? 0 : score * lvl.weight)
+  }, 0)
+}
+
+function controlContrib(key, ctrl) {
+  const total = levelTotals(key)
+  const lvl   = LEVELS.find(l => l.key === key)
+  return (ctrl.sev / total) * lvl.weight * 100
+}
+
+function render() {
+  const scores = computeScores()
+  const overall = iamScore(scores)
+
+  // Update score number
+  document.getElementById('iam-score').textContent = overall.toFixed(1)
+
+  // Update level bars
+  const barsEl = document.getElementById('level-bars')
+  barsEl.innerHTML = LEVELS.map(lvl => {
+    const { score, gated } = scores[lvl.key]
+    const pct = gated ? 0 : score
+    const label = gated ? 'gated' : (score >= 80 ? '✓' : score.toFixed(0) + '%')
+    return `
+      <div class="score-level-row">
+        <span class="score-level-tag" style="background:${lvl.color};color:${lvl.textColor}">${lvl.key}</span>
+        <div class="score-level-bar-wrap">
+          <div class="score-level-bar" style="width:${pct}%;background:${gated ? '#2a2a3a' : (score >= 80 ? '#16a34a' : lvl.color)}"></div>
+        </div>
+        <span class="score-level-pct">${gated ? '—' : score.toFixed(0) + '%'}</span>
+        ${score >= 80 && !gated ? '<span class="score-level-gate" style="color:#4ade80">unlocked</span>' : ''}
+        ${score < 80 && !gated ? '<span class="score-level-gate">needs 80%</span>' : ''}
+        ${gated ? '<span class="score-level-gate">gated</span>' : ''}
+      </div>`
+  }).join('')
+
+  // Update matrix
+  const matrixEl = document.getElementById('matrix')
+  matrixEl.innerHTML = LEVELS.map((lvl, i) => {
+    const { score, gated } = scores[lvl.key]
+    const colClass = `col-l${i + 1}`
+    const controlCount = CONTROLS[lvl.key].length
+    const passingCount = CONTROLS[lvl.key].filter(c => c.passing).length
+
+    const header = `
+      <div class="col-header">
+        ${lvl.key}
+        <span class="col-sub">${lvl.name} · ${controlCount} controls</span>
+        <span class="col-score">${gated ? '—' : score.toFixed(0) + '%'}</span>
+        ${gated ? '<span class="col-gated-label">🔒 gated</span>' : ''}
+        ${!gated && score < 80 ? '<span class="col-gated-label">needs 80% to unlock next</span>' : ''}
+      </div>`
+
+    const cards = CONTROLS[lvl.key].map(ctrl => {
+      const contrib = controlContrib(lvl.key, ctrl)
+      const statusClass = gated ? 'gated' : (ctrl.passing ? 'passing' : 'failing')
+      const statusLabel = gated ? 'locked' : (ctrl.passing ? 'pass' : 'fail')
+      return `
+        <div class="ctrl ${statusClass}" data-level="${lvl.key}" data-id="${ctrl.id}" onclick="toggle('${lvl.key}','${ctrl.id}')">
+          <div class="ctrl-top">
+            <span class="ctrl-id">${ctrl.id}</span>
+            <span class="ctrl-sev ${SEV_CLASS[ctrl.sev]}">${SEV_LABEL[ctrl.sev]}</span>
+          </div>
+          <div class="ctrl-name">${ctrl.name}</div>
+          <div class="ctrl-contrib">
+            <span class="contrib-val">${contrib.toFixed(2)}%</span>
+            <span class="ctrl-status">${statusLabel}</span>
+          </div>
+        </div>`
+    }).join('')
+
+    return `<div class="${colClass}">${header}<div class="col-body">${cards}</div></div>`
+  }).join('')
+}
+
+function toggle(levelKey, ctrlId) {
+  const scores = computeScores()
+  if (scores[levelKey].gated) return
+  const ctrl = CONTROLS[levelKey].find(c => c.id === ctrlId)
+  if (ctrl) { ctrl.passing = !ctrl.passing; render() }
+}
+
+render()
+</script>
+</body>
+</html>

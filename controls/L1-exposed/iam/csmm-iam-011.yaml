@@ -1,0 +1,44 @@
+id: "csmm-iam-011"
+name: "No IAM Policies with Wildcard Action and Wildcard Resource"
+level: 1
+pillar: "iam"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  No IAM policy (inline or managed, attached to any user, group, or role) may contain
+  an Allow statement with both Action: "*" and Resource: "*". This combination grants
+  full administrative access to every AWS service and resource. Any such policy must
+  be replaced with a scoped policy granting only the specific actions and resources
+  required for the principal's function.
+
+risk: >
+  A policy with Action: "*" and Resource: "*" is functionally equivalent to
+  AdministratorAccess. Any identity carrying this policy can read, modify, and delete
+  any resource in the account — including disabling logging, removing GuardDuty,
+  exfiltrating secrets, and creating backdoor IAM users or roles. This is the most
+  common finding in cloud breaches involving privilege escalation. Unlike the
+  AdministratorAccess managed policy (which is visible and named), custom policies
+  with this pattern are easy to miss in access reviews.
+
+verification:
+  - "Run: aws iam get-account-authorization-details and inspect all policy documents for statements matching {Effect: Allow, Action: '*', Resource: '*'}."
+  - "Check all inline policies on users, groups, and roles: aws iam list-user-policies, aws iam list-group-policies, aws iam list-role-policies — retrieve each and inspect."
+  - "Confirm AWS Config rule 'iam-policy-no-statements-with-admin-access' is enabled and reports COMPLIANT for all resources."
+  - "Verify Security Hub control IAM.1 (no full admin policies) is passing."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.22"
+    version: "1.4"
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-6(2)"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-no-statements-with-admin-access.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-1"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"

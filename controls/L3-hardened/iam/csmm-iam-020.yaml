@@ -1,43 +1,41 @@
 id: "csmm-iam-020"
-name: "Cross-Account IAM Trust Controls"
+name: "Enforce ABAC/RBAC Access Patterns"
 level: 3
 pillar: "iam"
-priority: "high"
-severity_weight: 3
+priority: "medium"
+severity_weight: 2
 
 description: >
-  All cross-account IAM role trust policies must include explicit conditions to
-  prevent confused deputy attacks — at minimum aws:SourceArn, aws:SourceAccount,
-  or aws:PrincipalOrgID conditions. Trust policies must not use wildcard (*)
-  principals or allow assumption from accounts outside the AWS Organization.
-  An SCP must deny iam:CreateRole and iam:UpdateAssumeRolePolicy unless the
-  trust policy includes an approved condition key.
+  Zero inline policies may be attached to IAM users — all access must be granted via
+  managed policies attached to IAM roles or groups. All managed policies must include
+  at least one tag-based condition key (aws:PrincipalTag, aws:ResourceTag, or
+  aws:RequestTag) OR be attached to a role following the naming pattern
+  {team}-{function}-role. All resources must carry mandatory tags: Team, Environment,
+  and Service.
 
 risk: >
-  Overly permissive trust policies allow any principal in the trusted account —
-  not just the intended service or role — to assume the cross-account role. This
-  creates confused deputy vulnerabilities where a compromised or multi-tenant
-  service in the trusted account can escalate access into your account. Without
-  aws:PrincipalOrgID conditions, roles can also be assumed by accounts that have
-  left or were never part of your organization.
+  Without structured ABAC or RBAC patterns, access control devolves into per-user
+  or per-resource inline policies that are impossible to audit at scale. Teams
+  create one-off policies for each request, leading to thousands of unique policy
+  documents with inconsistent scoping. This makes it infeasible to answer basic
+  questions like "who can access production data?" and creates gaps that only
+  surface during incidents.
 
 verification:
-  - "List all IAM roles with cross-account trust policies: aws iam list-roles and filter for trust policies referencing external account IDs"
-  - "For each cross-account role, confirm the trust policy includes aws:SourceArn, aws:SourceAccount, or aws:PrincipalOrgID conditions"
-  - "Verify no trust policy uses Principal: '*' or Principal: {AWS: '*'}"
-  - "Confirm IAM Access Analyzer findings for external access have been reviewed and resolved"
-  - "Validate SCP exists that restricts trust policy creation to approved patterns"
+  - "Run: aws iam list-users, then for each user run aws iam list-user-policies. Result must be empty for all users (zero inline policies)."
+  - "Run: aws iam list-attached-user-policies for all users. Result must be empty (all policies attached via roles or groups, not users)."
+  - "For all locally managed policies, retrieve the policy document and confirm it contains at least one Condition key from: aws:PrincipalTag, aws:ResourceTag, aws:RequestTag. Policies without conditions must be attached only to roles matching the naming pattern {team}-{function}-role."
+  - "Verify Tag Policy enforces mandatory tags Team, Environment, Service via: aws organizations describe-policy for all tag policies."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-6(3)"
+    control: "AC-3"
   - framework: "AWS Well-Architected"
     control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html"
-  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html"

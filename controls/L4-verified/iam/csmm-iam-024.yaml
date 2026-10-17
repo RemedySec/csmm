@@ -1,0 +1,37 @@
+id: "csmm-iam-024"
+name: "IAM Access Analyzer Enabled"
+level: 4
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  AWS IAM Access Analyzer must be enabled in every AWS region where resources are
+  deployed, with an organization-level analyzer configured at the management account
+  to provide cross-account visibility. Access Analyzer must be integrated with
+  Security Hub to centralize findings, and active findings must be reviewed and
+  resolved within defined SLA windows based on finding severity.
+
+risk: >
+  Without continuous access analysis, overprivileged policies and externally shared
+  resources such as S3 buckets, KMS keys, IAM roles, and Lambda functions go
+  undetected until a breach occurs. Access Analyzer findings frequently reveal
+  unintended cross-account access granted during infrastructure changes that would
+  otherwise persist indefinitely without automated detection.
+
+verification:
+  - "Confirm an organization-level analyzer exists: aws accessanalyzer list-analyzers --query 'analyzers[?type==`ORGANIZATION`]'"
+  - "Verify analyzers are enabled in all active regions by iterating across each region"
+  - "Check Security Hub integration is active and Access Analyzer findings appear in the Security Hub console"
+  - "Count Access Analyzer findings with severity HIGH or CRITICAL that are older than 30 days and do not have Security Hub workflow status RESOLVED — count must be zero."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-6"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-getting-started.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-providers.html"

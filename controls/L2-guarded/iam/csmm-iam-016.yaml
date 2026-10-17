@@ -1,4 +1,4 @@
-id: "csmm-iam-009"
+id: "csmm-iam-016"
 name: "Deny Leaving Organization via SCP"
 level: 2
 pillar: "iam"

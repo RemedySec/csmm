@@ -1,0 +1,40 @@
+id: "csmm-iam-009"
+name: "No IAM Policies Attached Directly to Users"
+level: 1
+pillar: "iam"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  IAM policies must be attached to groups or roles, never directly to individual IAM users.
+  Access permissions should be managed through group membership or role assumption so that
+  policy changes apply consistently across all principals with the same access level. Any
+  existing direct user-policy attachments must be migrated to group or role-based policies.
+
+risk: >
+  Direct policy attachments proliferate silently — each user accumulates a unique permission
+  set that is hard to audit, easy to over-provision, and difficult to revoke consistently.
+  When an employee changes role or leaves, directly attached policies are frequently missed
+  during access reviews, leaving stale permissions in place. Group and role-based policies
+  enforce a consistent, auditable access model and make least-privilege reviews tractable.
+
+verification:
+  - "Run: aws iam get-account-authorization-details --filter User | jq '[.UserDetailList[] | select(.UserPolicyList | length > 0) | .UserName]' — expect empty array."
+  - "Run: aws iam get-account-authorization-details --filter User | jq '[.UserDetailList[] | select(.AttachedManagedPolicies | length > 0) | .UserName]' — expect empty array."
+  - "Confirm AWS Config rule 'iam-user-no-policies-check' exists and reports COMPLIANT for all resources."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.16"
+    version: "1.4"
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#use-groups-for-permissions"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/iam-user-no-policies-check.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html"

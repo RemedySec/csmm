@@ -1,45 +1,38 @@
 id: "csmm-iam-013"
-name: "Enforce Temporary Credentials Over Long-Lived Keys"
+name: "Restrict Regions via SCP"
 level: 2
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All workloads and human users must authenticate using temporary credentials
-  obtained via IAM roles, SSO session tokens, or STS AssumeRole rather than
-  long-lived IAM access keys. Existing long-lived access keys must be identified,
-  migrated to role-based access, and decommissioned. Use the AWS Config rule
-  'iam-user-no-policies-check' combined with CloudTrail monitoring of
-  sts:AssumeRole vs iam:CreateAccessKey to measure adoption.
+  A Service Control Policy must deny all AWS service actions in regions that
+  are not explicitly approved for use by the organization. The policy uses a
+  NotAction list to exempt global services (IAM, STS, S3 control plane, etc.)
+  and a StringNotEquals condition on aws:RequestedRegion to block any API call
+  targeting an unapproved region.
 
 risk: >
-  Long-lived access keys do not expire automatically and are frequently leaked
-  through source code repositories, CI/CD logs, container images, and developer
-  workstations. Unlike temporary credentials that expire within hours, a
-  compromised long-lived key grants persistent access until manually revoked,
-  giving attackers an extended window to exfiltrate data, escalate privileges,
-  or establish persistence mechanisms.
+  Resources provisioned in unused or unapproved regions fall outside the scope
+  of centrally deployed monitoring, logging, and security tooling, creating
+  blind spots that attackers can exploit to establish persistent footholds.
+  Shadow resources in unexpected regions also increase the attack surface and
+  complicate compliance audits, as automated scanners and Config rules are
+  often region-scoped and may not be deployed everywhere.
 
 verification:
-  - "Generate IAM credential report and confirm no active access keys exist for human users: aws iam generate-credential-report && aws iam get-credential-report"
-  - "Verify all EC2 instances use instance profiles (IAM roles) instead of embedded access keys"
-  - "Run: aws lambda list-functions --query 'Functions[].Environment.Variables' and confirm no value matches pattern AKIA* or contains aws_secret_access_key. Run: aws ecs describe-task-definition for all active task definitions and confirm no environment or secrets entries contain static credentials."
-  - "Verify CI/CD runners use OIDC federation by confirming an IAM OIDC provider exists: aws iam list-open-id-connect-providers. Grep CI/CD configuration files for patterns matching AKIA or aws_secret — result must be empty."
+  - "List SCPs at the root or target OU and confirm a Deny statement with aws:RequestedRegion StringNotEquals the approved region list."
+  - "Verify the NotAction list exempts iam:*, sts:*, s3:GetBucketLocation, support:*, and other genuinely global services to avoid breakage."
+  - "From a member account, attempt to create an EC2 instance in a non-approved region (e.g., ap-southeast-2 if not approved) and confirm denial."
+  - "Review the approved region list against the organization's data residency and compliance requirements to ensure it is minimally scoped."
 
 compliance:
-  - framework: "CIS AWS Foundations"
-    control: "1.14"
-    version: "3.0"
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC6.6"
   - framework: "NIST 800-53"
-    control: "IA-5(1)"
-  - framework: "AWS Well-Architected"
-    control: "SEC 02 — How do you manage authentication for people and machines?"
+    control: "SC-7"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#use-roles-with-ec2"
-  - "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html#example-scp-deny-region"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-requestedregion"
+  - "https://aws.amazon.com/blogs/security/how-to-use-service-control-policies-to-set-permission-guardrails-across-accounts-in-your-aws-organization/"

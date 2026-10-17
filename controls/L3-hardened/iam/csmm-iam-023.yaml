@@ -1,0 +1,42 @@
+id: "csmm-iam-023"
+name: "IAM Data Perimeter Controls"
+level: 3
+pillar: "iam"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Implement IAM data perimeter controls using a combination of VPC endpoints,
+  aws:SourceVpce and aws:SourceVpc conditions in resource policies, and
+  aws:PrincipalOrgID conditions to ensure that data can only be accessed by
+  trusted identities from trusted networks within the organization. Resource
+  policies on S3 buckets, KMS keys, SQS queues, and SNS topics must deny
+  requests that do not originate from approved VPC endpoints or the organization.
+
+risk: >
+  Without data perimeter controls, a valid IAM credential can be used from any
+  network location — including an attacker's infrastructure — to access AWS
+  resources. Credential exfiltration from EC2 instances, Lambda functions, or
+  developer machines allows data exfiltration from outside the corporate network,
+  bypassing all network-level monitoring, DLP, and egress controls.
+
+verification:
+  - "Verify VPC endpoints exist for S3, KMS, SQS, SNS, and other data services in all VPCs"
+  - "Confirm S3 bucket policies include Deny statements for requests not matching aws:SourceVpce or aws:PrincipalOrgID"
+  - "Validate KMS key policies restrict usage to requests from within the organization and approved VPC endpoints"
+  - "Test that API calls to protected resources from outside approved VPC endpoints are denied"
+  - "Review SCP enforcement of data perimeter conditions on new resource policy creation"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "AC-4"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/whitepapers/latest/building-a-data-perimeter-on-aws/building-a-data-perimeter-on-aws.html"
+  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourcevpce"
+  - "https://aws.amazon.com/blogs/security/establishing-a-data-perimeter-on-aws/"

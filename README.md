@@ -27,7 +27,7 @@ Most security tools stop at configuration checks — is MFA on? Is the bucket pu
 - **JIT/break-glass access** — does anyone have standing admin access to production?
 - **Auto-remediation** — does your environment self-heal, or wait for a human?
 
-No scanner can tell you whether your IAM architecture is sound. CSMM can.
+Configuration scanners can't tell you whether your IAM architecture is sound — that requires scoring design decisions. CSMM gives you the criteria to do that.
 
 ---
 

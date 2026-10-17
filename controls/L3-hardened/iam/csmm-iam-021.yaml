@@ -1,42 +1,41 @@
 id: "csmm-iam-021"
-name: "IAM Data Perimeter Controls"
+name: "Periodic Least Privilege Access Review"
 level: 3
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Implement IAM data perimeter controls using a combination of VPC endpoints,
-  aws:SourceVpce and aws:SourceVpc conditions in resource policies, and
-  aws:PrincipalOrgID conditions to ensure that data can only be accessed by
-  trusted identities from trusted networks within the organization. Resource
-  policies on S3 buckets, KMS keys, SQS queues, and SNS topics must deny
-  requests that do not originate from approved VPC endpoints or the organization.
+  IAM Access Analyzer unused access findings older than 90 days must be auto-escalated
+  via Security Hub to a ticket system with an assigned owner. Findings unresolved after
+  14 additional days trigger automatic policy scoping using Access Analyzer policy
+  generation to produce right-sized replacement policies. No IAM policy may grant
+  Action: '*' on Resource: '*' outside of roles tagged RoleType=BreakGlass.
 
 risk: >
-  Without data perimeter controls, a valid IAM credential can be used from any
-  network location — including an attacker's infrastructure — to access AWS
-  resources. Credential exfiltration from EC2 instances, Lambda functions, or
-  developer machines allows data exfiltration from outside the corporate network,
-  bypassing all network-level monitoring, DLP, and egress controls.
+  Permissions accumulate over time as teams request access for projects, migrations,
+  and incidents but rarely relinquish them afterward. This privilege creep creates
+  an ever-expanding blast radius — a compromised role with months of accumulated
+  unused permissions grants attackers far broader access than the role's current
+  function requires.
 
 verification:
-  - "Verify VPC endpoints exist for S3, KMS, SQS, SNS, and other data services in all VPCs"
-  - "Confirm S3 bucket policies include Deny statements for requests not matching aws:SourceVpce or aws:PrincipalOrgID"
-  - "Validate KMS key policies restrict usage to requests from within the organization and approved VPC endpoints"
-  - "Test that API calls to protected resources from outside approved VPC endpoints are denied"
-  - "Review SCP enforcement of data perimeter conditions on new resource policy creation"
+  - "Count Access Analyzer unused access findings older than 90 days: aws accessanalyzer list-findings — result must be zero or all must have linked tickets."
+  - "List all IAM policies: aws iam list-policies --scope Local and inspect each policy document. Zero policies may contain Action: '*' with Resource: '*' unless attached to a role tagged RoleType=BreakGlass."
+  - "Verify EventBridge rule exists that routes Access Analyzer findings to a ticket system (Jira, ServiceNow, or equivalent)."
+  - "Confirm at least one policy was auto-scoped in the last 90 days by checking Access Analyzer policy generation history."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.6"
+    control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-4"
+    control: "AC-6(7)"
+  - framework: "ISO 27001"
+    control: "A.9.2.5"
   - framework: "AWS Well-Architected"
-    control: "SEC 05 — How do you protect your network resources?"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://docs.aws.amazon.com/whitepapers/latest/building-a-data-perimeter-on-aws/building-a-data-perimeter-on-aws.html"
-  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourcevpce"
-  - "https://aws.amazon.com/blogs/security/establishing-a-data-perimeter-on-aws/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
