@@ -102,7 +102,7 @@ Each pillar carries a weight that reflects its relative importance to overall cl
 |------------|--------------|
 | IAM        | 0.30         |
 | Networking | 0.20         |
-| Storage    | 0.20         |
+| Data    | 0.20         |
 | Compute    | 0.15         |
 | Monitoring | 0.15         |
 
@@ -145,7 +145,7 @@ max overall_score
 
 ## Worked Example
 
-The following example illustrates how a real assessment score is computed for a single pillar (IAM), then shows how the IAM component combines with the other pillars into an overall score.
+The following example illustrates how the scoring formula works. Control IDs use a generic placeholder format (`IAM-L1-001`) rather than the catalog's `csmm-iam-NNN` convention, and control counts are illustrative — the current catalog has 11 IAM L1 controls with total severity weight 33, not the 9 shown here.
 
 ### Scenario
 
@@ -223,11 +223,11 @@ The following table summarizes a complete assessment across all five pillars. IA
 | Networking | L3    | 72.0        | No     | 0.20         | 0.20          | 2.88         |
 | Networking | L4    | 65.0        | Yes    | 0.12         | 0.20          | 0.00         |
 | Networking | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
-| Storage    | L1    | 95.0        | No     | 0.35         | 0.20          | 6.65         |
-| Storage    | L2    | 88.0        | No     | 0.25         | 0.20          | 4.40         |
-| Storage    | L3    | 80.0        | No     | 0.20         | 0.20          | 3.20         |
-| Storage    | L4    | 75.0        | Yes    | 0.12         | 0.20          | 0.00         |
-| Storage    | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
+| Data    | L1    | 95.0        | No     | 0.35         | 0.20          | 6.65         |
+| Data    | L2    | 88.0        | No     | 0.25         | 0.20          | 4.40         |
+| Data    | L3    | 80.0        | No     | 0.20         | 0.20          | 3.20         |
+| Data    | L4    | 75.0        | Yes    | 0.12         | 0.20          | 0.00         |
+| Data    | L5    | —           | Yes    | 0.08         | 0.20          | 0.00         |
 | Compute    | L1    | 88.0        | No     | 0.35         | 0.15          | 4.62         |
 | Compute    | L2    | 83.0        | No     | 0.25         | 0.15          | 3.11         |
 | Compute    | L3    | 78.0        | No     | 0.20         | 0.15          | 2.34         |
@@ -243,7 +243,7 @@ The following table summarizes a complete assessment across all five pillars. IA
 
 - IAM L1 score (79.3%) is below 80%, so IAM L2 and above are gated out.
 - Networking L3 score (72.0%) is below 80%, so Networking L4 and L5 are gated out.
-- Storage L3 score (80.0%) exactly meets the threshold, so Storage L4 is not gated out due to L3 — however, Storage L4's own score (75.0%) is below 80%, which gates out Storage L5.
+- Data L3 score (80.0%) exactly meets the threshold, so Data L4 is not gated out due to L3 — however, Data L4's own score (75.0%) is below 80%, which gates out Data L5.
 - Compute L3 score (78.0%) is below 80%, so Compute L4 and L5 are gated out.
 - Monitoring L2 score (70.0%) is below 80%, so Monitoring L3 and above are gated out. Monitoring L2 itself still contributes because Monitoring L1 (85.0%) passed the gating threshold.
 
@@ -258,10 +258,10 @@ overall_score = sum of all non-gated contributions
 + 4.25   (Networking L2)
 + 2.88   (Networking L3)
 + 0.00   (Networking L4–L5, gated)
-+ 6.65   (Storage L1)
-+ 4.40   (Storage L2)
-+ 3.20   (Storage L3)
-+ 0.00   (Storage L4–L5, gated)
++ 6.65   (Data L1)
++ 4.40   (Data L2)
++ 3.20   (Data L3)
++ 0.00   (Data L4–L5, gated)
 + 4.62   (Compute L1)
 + 3.11   (Compute L2)
 + 2.34   (Compute L3)
@@ -279,14 +279,14 @@ overall_score = sum of all non-gated contributions
 
 This score of 53.2 reflects an organization that:
 
-- Has strong L1 performance in Networking (91%), Storage (95%), and Compute (88%) but a critical L1 failure in IAM (79.3%) that gates out all IAM upper levels — pulling the IAM pillar contribution down significantly.
-- Has reasonable L2 and L3 coverage in Networking, Storage, and Compute but not yet achieved the L3 threshold needed to unlock L4 in those pillars.
+- Has strong L1 performance in Networking (91%), Data (95%), and Compute (88%) but a critical L1 failure in IAM (79.3%) that gates out all IAM upper levels — pulling the IAM pillar contribution down significantly.
+- Has reasonable L2 and L3 coverage in Networking, Data, and Compute but not yet achieved the L3 threshold needed to unlock L4 in those pillars.
 - Has basic Monitoring coverage at L1 (85%) but L2 monitoring controls are incomplete (70%), which gates out L3–L5 monitoring.
 - Has not yet implemented meaningful L4 or L5 controls.
 
-The gating impact is substantial: without gating, this organization would have received partial credit for IAM L2–L5, for the L4 controls attempted in Storage and Compute, and for higher-level Monitoring controls. Gating removes this credit, producing a score that honestly reflects the weakest link in each chain.
+The gating impact is substantial: without gating, this organization would have received partial credit for IAM L2–L5, for the L4 controls attempted in Data and Compute, and for higher-level Monitoring controls. Gating removes this credit, producing a score that honestly reflects the weakest link in each chain.
 
-**Priority action for this organization:** Remediate the two failing IAM L1 controls (IAM-L1-005 access key rotation, IAM-L1-007 unused credential cleanup) to raise IAM L1 above 80%. This single action would unlock IAM L2–L5 scoring and could materially improve the overall score. Improving Monitoring L2 coverage above 80% is the next highest-leverage action.
+**Priority action for this organization:** Remediate the two failing IAM L1 controls (the access key rotation and unused credential cleanup controls) to raise IAM L1 above 80%. This single action would unlock IAM L2–L5 scoring and could materially improve the overall score. Improving Monitoring L2 coverage above 80% is the next highest-leverage action.
 
 ---
 
@@ -325,4 +325,4 @@ Yes. The overall score is a summary. Two organizations with a score of 60 may ha
 
 **Q: What happens to the score when new controls are added in a MINOR version?**
 
-Adding new controls increases the denominator of the relevant level scores, which may reduce existing level scores and overall scores even if no new failures are introduced. This is intentional: new controls represent newly recognized risks. Organizations should review the CHANGELOG when upgrading to a new MINOR version to understand which controls were added and what remediation may be required.
+Adding new controls increases the denominator of the relevant level scores, which may reduce existing level scores and overall scores even if no new failures are introduced. This is intentional: new controls represent newly recognized risks. Organizations should review the release notes when upgrading to a new MINOR version to understand which controls were added and what remediation may be required.

@@ -1,42 +1,43 @@
 id: "csmm-iam-023"
-name: "IAM Data Perimeter Controls"
+name: "Cross-Account IAM Trust Controls"
 level: 3
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Implement IAM data perimeter controls using a combination of VPC endpoints,
-  aws:SourceVpce and aws:SourceVpc conditions in resource policies, and
-  aws:PrincipalOrgID conditions to ensure that data can only be accessed by
-  trusted identities from trusted networks within the organization. Resource
-  policies on S3 buckets, KMS keys, SQS queues, and SNS topics must deny
-  requests that do not originate from approved VPC endpoints or the organization.
+  All cross-account IAM role trust policies must include explicit conditions to
+  prevent confused deputy attacks — at minimum aws:SourceArn, aws:SourceAccount,
+  or aws:PrincipalOrgID conditions. Trust policies must not use wildcard (*)
+  principals or allow assumption from accounts outside the AWS Organization.
+  An SCP must deny iam:CreateRole and iam:UpdateAssumeRolePolicy unless the
+  trust policy includes an approved condition key.
 
 risk: >
-  Without data perimeter controls, a valid IAM credential can be used from any
-  network location — including an attacker's infrastructure — to access AWS
-  resources. Credential exfiltration from EC2 instances, Lambda functions, or
-  developer machines allows data exfiltration from outside the corporate network,
-  bypassing all network-level monitoring, DLP, and egress controls.
+  Overly permissive trust policies allow any principal in the trusted account —
+  not just the intended service or role — to assume the cross-account role. This
+  creates confused deputy vulnerabilities where a compromised or multi-tenant
+  service in the trusted account can escalate access into your account. Without
+  aws:PrincipalOrgID conditions, roles can also be assumed by accounts that have
+  left or were never part of your organization.
 
 verification:
-  - "Verify VPC endpoints exist for S3, KMS, SQS, SNS, and other data services in all VPCs"
-  - "Confirm S3 bucket policies include Deny statements for requests not matching aws:SourceVpce or aws:PrincipalOrgID"
-  - "Validate KMS key policies restrict usage to requests from within the organization and approved VPC endpoints"
-  - "Test that API calls to protected resources from outside approved VPC endpoints are denied"
-  - "Review SCP enforcement of data perimeter conditions on new resource policy creation"
+  - "List all IAM roles with cross-account trust policies: aws iam list-roles and filter for trust policies referencing external account IDs"
+  - "For each cross-account role, confirm the trust policy includes aws:SourceArn, aws:SourceAccount, or aws:PrincipalOrgID conditions"
+  - "Verify no trust policy uses Principal: '*' or Principal: {AWS: '*'}"
+  - "Confirm IAM Access Analyzer findings for external access have been reviewed and resolved"
+  - "Validate SCP exists that restricts trust policy creation to approved patterns"
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.6"
+    control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "AC-4"
+    control: "AC-6(3)"
   - framework: "AWS Well-Architected"
-    control: "SEC 05 — How do you protect your network resources?"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://docs.aws.amazon.com/whitepapers/latest/building-a-data-perimeter-on-aws/building-a-data-perimeter-on-aws.html"
-  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourcevpce"
-  - "https://aws.amazon.com/blogs/security/establishing-a-data-perimeter-on-aws/"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"

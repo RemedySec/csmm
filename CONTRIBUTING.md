@@ -27,10 +27,18 @@ Follow these steps to submit a new control for inclusion in CSMM:
    ```
    controls/<level-dir>/<pillar>/<control-id>.yaml
    ```
-   Level directories use the names: `L1-exposed`, `L2-guarded`, `L3-hardened`, `L4-verified`, `L5-autonomous`. Pillars are: `iam`, `networking`, `storage`, `compute`, `monitoring`. For example: `controls/L2-guarded/iam/csmm-iam-013.yaml`
+   Level directories use the names: `L1-exposed`, `L2-guarded`, `L3-hardened`, `L4-verified`, `L5-autonomous`. Pillars are: `iam`, `networking`, `data`, `compute`, `monitoring`. For example: `controls/L2-guarded/iam/csmm-iam-018.yaml`
 
-4. **Ensure your YAML includes all required fields:**
-   - `id` — unique control identifier (e.g., `csmm-iam-013`)
+4. **Assign a control ID** using the convention `csmm-<pillar-prefix>-<NNN>` where:
+   - Pillar prefixes: `iam`, `net`, `dat`, `cmp`, `mon`
+   - `NNN` is a zero-padded three-digit number (e.g. `001`, `023`)
+   - IDs are **globally unique** across all levels within a pillar — do not reuse numbers across levels
+   - Before assigning an ID, find the highest existing ID for the pillar: `ls controls/*/<pillar>/ | sort` — your new control gets the next number (e.g. `ls controls/*/networking/ | sort`)
+   - File name must match the `id` field exactly: `csmm-iam-018.yaml` contains `id: "csmm-iam-018"`
+   - **Do not submit a PR with a placeholder ID** (e.g. `csmm-iam-999`) — maintainers will assign the correct ID during review if you are unsure
+
+5. **Ensure your YAML includes all required fields:**
+   - `id` — unique control identifier following the convention above (e.g., `csmm-iam-018`)
    - `name` — short, descriptive control name
    - `level` — maturity level (1–5)
    - `pillar` — the security pillar this control belongs to
@@ -100,7 +108,7 @@ When opening a PR for a new control, include a filled-out version of the schema 
 id: "csmm-<pillar>-<###>"          # e.g., csmm-iam-013
 name: ""                           # Short, descriptive name
 level: 1                           # Maturity level: 1, 2, 3, 4, or 5
-pillar: ""                         # iam | networking | storage | compute | monitoring
+pillar: ""                         # iam | networking | data | compute | monitoring
 priority: "critical"               # critical | high | medium | low
 severity_weight: 4                 # 4=critical, 3=high, 2=medium, 1=low
 

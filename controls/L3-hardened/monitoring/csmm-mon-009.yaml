@@ -1,0 +1,43 @@
+id: "csmm-mon-009"
+name: "Incident Response Process and Runbooks"
+level: 3
+pillar: "monitoring"
+priority: "high"
+severity_weight: 3
+
+description: >
+  A documented incident response process must exist with defined severity levels,
+  escalation paths, roles (incident commander, security analyst, communications lead),
+  and SLAs for response and containment. Automated runbooks must be implemented
+  for at minimum these 6 scenarios: (1) compromised IAM credentials, (2) public S3
+  bucket, (3) GuardDuty high-severity finding, (4) root account usage, (5) crypto-mining
+  detection, (6) data exfiltration signal. Tabletop exercises must be conducted
+  quarterly, lasting at least 2 hours, with at least 3 participants including the
+  incident commander role. Exercise results and findings must be documented.
+
+risk: >
+  Without pre-defined runbooks, incident response is improvised under pressure.
+  Analysts make ad-hoc decisions about containment, evidence collection, and
+  communication, leading to inconsistent outcomes, missed forensic evidence, and
+  delayed containment. The difference between a contained incident and a breach
+  is often the first 30 minutes — that time must not be spent deciding what to do.
+
+verification:
+  - "Confirm an incident response plan document exists with severity definitions and escalation paths"
+  - "Verify automated runbooks exist for at least 10 common security events (either SSM Automation or SOAR)"
+  - "Confirm tabletop exercises were conducted in the last 90 days with documented findings"
+  - "Test that a GuardDuty high-severity finding triggers the correct runbook within 5 minutes"
+  - "Verify incident postmortems are documented and action items are tracked to completion"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.3"
+  - framework: "NIST 800-53"
+    control: "IR-4"
+  - framework: "ISO 27001"
+    control: "A.16.1"
+
+references:
+  - "https://docs.aws.amazon.com/whitepapers/latest/aws-security-incident-response-guide/welcome.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-automation.html"
+  - "https://docs.aws.amazon.com/incident-manager/latest/userguide/what-is-incident-manager.html"

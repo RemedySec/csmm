@@ -1,0 +1,46 @@
+id: "csmm-net-013"
+name: "VPC Peering Route Tables Scoped to Least-Access CIDRs"
+level: 2
+pillar: "networking"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  Route tables associated with VPC peering connections must specify the exact
+  destination CIDR blocks required for the peering relationship — never the
+  entire CIDR range of the peer VPC unless the full range is legitimately needed.
+  A route table entry pointing to a peering connection with destination 0.0.0.0/0
+  or the full /16 of the peer VPC when only a /24 subnet is needed violates
+  least-privilege networking. All peering routes must be reviewed and scoped to
+  the minimum CIDR required for the business purpose.
+
+risk: >
+  Overly broad VPC peering routes allow instances in one VPC to reach any subnet
+  in the peer VPC, not just the intended service endpoints. If one VPC is
+  compromised, an attacker can use the over-permissive peering route to reach
+  databases, internal APIs, and management interfaces in the peer VPC that were
+  never intended to be accessible. This is a common lateral movement path in
+  multi-VPC architectures where peering is set up for a specific integration but
+  the route is left as a broad CIDR for convenience.
+
+verification:
+  - "List all VPC peering connections: aws ec2 describe-vpc-peering-connections --filters Name=status-code,Values=active"
+  - "For each peering connection, retrieve associated route tables: aws ec2 describe-route-tables | jq '.RouteTables[] | select(.Routes[].VpcPeeringConnectionId != null)'"
+  - "For each peering route, compare the destination CIDR against the actual subnets in the peer VPC that need to be reached — flag any route where the destination is broader than the minimum required."
+  - "Confirm no peering route table entry uses 0.0.0.0/0 as destination with a peering connection as target."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "5.5"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html"
+  - "https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-security-groups.html"

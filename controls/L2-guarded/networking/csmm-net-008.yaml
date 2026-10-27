@@ -1,40 +1,41 @@
 id: "csmm-net-008"
-name: "Enable VPC Flow Logs"
+name: "GuardDuty Enabled"
 level: 2
 pillar: "networking"
-priority: "high"
-severity_weight: 3
+priority: "critical"
+severity_weight: 4
 
 description: >
-  VPC Flow Logs must be enabled on all VPCs and configured to capture ACCEPT
-  and REJECT traffic, with log data delivered to CloudWatch Logs or S3 with
-  a retention policy of at least 90 days. Flow logs must use log format version 5 with fields: srcaddr, dstaddr, srcport, dstport, protocol, tcp-flags, type, pkt-srcaddr, pkt-dstaddr
-  for richer forensic analysis.
+  Amazon GuardDuty must be enabled in every AWS region in every member account,
+  with the organization management account configured as the GuardDuty
+  delegated administrator so that new member accounts are automatically enrolled.
+  GuardDuty findings must be aggregated to a central security account, and
+  findings with severity >= 7.0 must trigger an EventBridge rule that publishes to SNS within 5 minutes of finding creation.
 
 risk: >
-  Without VPC Flow Logs, security teams have no visibility into which IP
-  addresses are communicating with instances, making network-based anomaly
-  detection, lateral movement tracing, and forensic reconstruction impossible
-  after an incident. Regulatory frameworks including PCI DSS and HIPAA
-  explicitly require network traffic logging, and gaps in this data can result
-  in audit failures and inability to demonstrate breach scope during assessments.
+  Without GuardDuty, there is no automated, ML-driven analysis of CloudTrail
+  API logs, VPC Flow Logs, and DNS logs for indicators of compromise such as
+  reconnaissance activity, credential exfiltration, cryptocurrency mining,
+  communication with known malicious IPs, and anomalous API call patterns.
+  Human review of raw logs at scale is impractical, meaning that ongoing
+  attacker activity — including lateral movement, data staging, and persistent
+  access establishment — can continue undetected for weeks or months until
+  discovered through external notification or manual audit.
 
 verification:
-  - "Run aws ec2 describe-flow-logs --filter Name=resource-type,Values=VPC for each region and confirm every VPC ID has at least one active flow log."
-  - "Confirm the flow log TrafficType is ALL (not ACCEPT or REJECT only) and the LogFormat includes enhanced metadata fields."
-  - "Verify the destination (CloudWatch Logs group or S3 bucket) has a retention policy of at least 90 days and appropriate access controls."
-  - "Check that AWS Config rule vpc-flow-logs-enabled is deployed and compliant in all in-scope regions."
+  - "Run aws guardduty list-detectors in each region for every account and confirm at least one detector exists with Status: ENABLED."
+  - "In the organization management or security tooling account, confirm aws guardduty list-members returns all expected member accounts as active."
+  - "Verify auto-enable is configured for new accounts: aws guardduty describe-organization-configuration should show AutoEnable: true."
+  - "Confirm an EventBridge rule is in place to route GuardDuty HIGH and CRITICAL severity findings to an SNS topic with an active subscription."
+  - "Test by running: aws guardduty create-sample-findings. Verify the EventBridge rule fires and SNS notification is delivered within 5 minutes."
 
 compliance:
-  - framework: "CIS AWS Foundations"
-    control: "3.9"
-    version: "3.0"
   - framework: "SOC2"
     control: "CC7.2"
   - framework: "NIST 800-53"
-    control: "AU-12"
+    control: "SI-4"
 
 references:
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html"
-  - "https://docs.aws.amazon.com/config/latest/developerguide/vpc-flow-logs-enabled.html"
+  - "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html"
+  - "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html"
+  - "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings_cloudwatch.html"

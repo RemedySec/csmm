@@ -1,41 +1,42 @@
 id: "csmm-cmp-007"
-name: "Use Launch Templates Not Launch Configurations"
+name: "No Secrets or Credentials in Lambda Environment Variables"
 level: 2
 pillar: "compute"
-priority: "medium"
-severity_weight: 2
+priority: "critical"
+severity_weight: 4
 
 description: >
-  All Auto Scaling Groups must use EC2 Launch Templates rather than the
-  deprecated Launch Configurations API. Launch Configurations must not be
-  created for new workloads, and any existing Auto Scaling Groups still
-  referencing Launch Configurations must be migrated to Launch Templates.
-  Launch Templates should use versioning to track changes and enable safe
-  rollback.
+  Lambda function environment variables must not contain plaintext secrets,
+  API keys, passwords, tokens, or connection strings. All sensitive values
+  must be stored in AWS Secrets Manager or SSM Parameter Store (SecureString)
+  and retrieved at runtime. Environment variables that are present must be
+  encrypted with a customer-managed KMS key — not the default Lambda service
+  key — so that access to the key can be independently controlled and audited.
 
 risk: >
-  Launch Configurations are a legacy API that does not support critical security
-  settings including IMDSv2 enforcement, Nitro-based instance type requirements,
-  and other instance metadata options. Because Launch Configurations are
-  immutable and cannot be updated in place, teams are often forced to work
-  around limitations rather than applying security settings, leading to
-  persistent misconfigurations. AWS has announced that Launch Configurations
-  will not receive new feature support, meaning security gaps will widen over
-  time.
+  Lambda environment variables are accessible to anyone with lambda:GetFunction
+  or lambda:GetFunctionConfiguration permissions — a broadly granted permission
+  in many environments. Secrets stored in environment variables are also visible
+  in the Lambda console, in CloudFormation templates, in Terraform state files,
+  and in any CI/CD pipeline that deploys the function. A single IAM credential
+  compromise that includes lambda:GetFunction can harvest all secrets across
+  every function in the account simultaneously.
 
 verification:
-  - "Run aws autoscaling describe-auto-scaling-groups across all regions and flag any ASG where LaunchConfigurationName is set instead of LaunchTemplate."
-  - "Confirm no new Launch Configurations are being created by reviewing CloudTrail for recent CreateLaunchConfiguration API calls."
-  - "Verify that all Launch Templates include MetadataOptions with HttpTokens set to required."
-  - "Check that Launch Template versioning is used and that ASGs reference a specific version or $Latest with a change management process in place."
+  - "For each Lambda function: aws lambda get-function-configuration --function-name <name> | jq '.Environment.Variables' — scan values for patterns matching secrets (keys, tokens, passwords, connection strings)."
+  - "Use automated secret detection tooling (e.g. truffleHog, detect-secrets, or AWS Macie Lambda scanning) to scan environment variable values across all functions."
+  - "Confirm KmsKeyArn is set to a customer-managed CMK, not the default aws/lambda key: aws lambda get-function-configuration --query 'KMSKeyArn'"
+  - "AWS Config rule: lambda-no-plaintext-secrets — deploy if available, otherwise implement a custom Config rule using a Lambda evaluator."
 
 compliance:
   - framework: "SOC2"
-    control: "CC7.1"
+    control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "CM-2"
+    control: "IA-5"
+  - framework: "AWS Well-Architected"
+    control: "SEC 09 — How do you protect your data in transit?"
 
 references:
-  - "https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-templates.html"
-  - "https://docs.aws.amazon.com/autoscaling/ec2/userguide/migrate-to-launch-templates.html"
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_lambda.html"
+  - "https://docs.aws.amazon.com/systems-manager/latest/userguide/integration-ps-secretsmanager.html"

@@ -1,33 +1,35 @@
 id: "csmm-mon-005"
-name: "CloudWatch Alarm for CloudTrail Configuration Changes"
+name: "CloudTrail Integrated with CloudWatch Logs"
 level: 2
 pillar: "monitoring"
 priority: "high"
 severity_weight: 3
 
 description: >
-  A CloudWatch metric filter and alarm must detect changes to CloudTrail
-  configuration, including StopLogging, DeleteTrail, UpdateTrail, and
-  CreateTrail events. Audit trail tampering must trigger immediate SNS
-  alerting to prevent blind spots in the security audit record.
+  All CloudTrail trails must be configured to deliver log events to a CloudWatch
+  Logs log group in real time. The CloudWatchLogsLogGroupArn and
+  CloudWatchLogsRoleArn fields must be set on every trail, and the log group
+  must have received events within the last 24 hours. This integration is the
+  prerequisite for all CloudWatch metric filter-based alarms — without it,
+  CloudTrail events are only available in S3 with significant delivery delay
+  and no real-time alerting capability.
 
 risk: >
-  Disabling or modifying CloudTrail is a common attacker action to cover tracks
-  after initial access. Delayed detection of trail configuration changes allows
-  extended periods of unmonitored activity, making forensic investigation of
-  the full breach timeline impossible and potentially invalidating compliance
-  audit evidence.
+  CloudTrail writing only to S3 provides forensic evidence after the fact but
+  no real-time detection. An attacker who compromises credentials and begins
+  making API calls will not trigger any CloudWatch alarms unless the trail is
+  actively streaming to CloudWatch Logs. The gap between an event occurring
+  and a human reviewing S3 logs is typically hours to days — more than enough
+  time to establish persistence, exfiltrate data, and cover tracks.
 
 verification:
-  - "Verify the metric filter pattern includes StopLogging, DeleteTrail, and UpdateTrail: aws logs describe-metric-filters --log-group-name <trail-log-group>"
-  - "Confirm the alarm has a period of 300 seconds or less and threshold >= 1"
-  - "Verify an SNS action is attached with a confirmed subscription delivering to an actively monitored endpoint"
-  - "Confirm CloudTrail itself has log file validation enabled: aws cloudtrail describe-trails --query 'trailList[].LogFileValidationEnabled'"
-  - "Test by attempting to stop logging (in a non-production account) and verify the alarm fires within one evaluation period"
+  - "Run: aws cloudtrail describe-trails | jq '.trailList[] | {Name, CloudWatchLogsLogGroupArn, CloudWatchLogsRoleArn}' — confirm both fields are non-null for all trails."
+  - "Run: aws cloudtrail get-trail-status --name <trail-arn> | jq '{LatestCloudWatchLogsDeliveryTime, LatestCloudWatchLogsDeliveryError}' — confirm delivery time is within the last 24 hours and no delivery error exists."
+  - "AWS Config rule: cloud-trail-cloud-watch-logs-enabled — deploy and confirm compliant."
 
 compliance:
   - framework: "CIS AWS Foundations"
-    control: "4.5"
+    control: "3.4"
     version: "3.0"
   - framework: "SOC2"
     control: "CC7.2"
@@ -36,6 +38,4 @@ compliance:
 
 references:
   - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
-  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
-  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-5"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/cloud-trail-cloud-watch-logs-enabled.html"

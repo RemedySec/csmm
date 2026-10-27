@@ -1,41 +1,53 @@
 id: "csmm-mon-006"
-name: "CloudWatch Alarm for S3 Bucket Policy Changes"
+name: "CIS CloudWatch Metric Alarms Configured"
 level: 2
 pillar: "monitoring"
 priority: "high"
 severity_weight: 3
 
 description: >
-  A CloudWatch metric filter and alarm must detect changes to S3 bucket access
-  controls, including PutBucketPolicy, DeleteBucketPolicy, PutBucketAcl,
-  PutBucketCors, and PutBucketPublicAccessBlock events. Bucket access
-  modifications must trigger SNS notification to enable rapid response before
-  data exposure occurs.
+  CloudWatch metric filters and alarms must be configured for all 11 CIS AWS
+  Foundations Benchmark v3.0 monitoring events. Each alarm requires a metric
+  filter on the CloudTrail log group, a CloudWatch alarm with threshold >= 1,
+  and an SNS topic action with at least one confirmed subscription. The required
+  alarms are:
+  (1) Unauthorized API calls — errorCode = AccessDenied or UnauthorizedOperation
+  (2) Root account usage — userIdentity.type = Root
+  (3) IAM policy changes — CreatePolicy, AttachRolePolicy, PutUserPolicy, etc.
+  (4) CloudTrail configuration changes — StopLogging, DeleteTrail, UpdateTrail
+  (5) S3 bucket policy changes — PutBucketPolicy, DeleteBucketPolicy
+  (6) Security group changes — AuthorizeSecurityGroupIngress, RevokeSecurityGroupIngress, etc.
+  (7) VPC changes — CreateVpc, DeleteVpc, ModifyVpcAttribute
+  (8) AWS Organizations changes — CreateOrganization, LeaveOrganization, etc.
+  (9) Console sign-in without MFA — ConsoleLogin where MFA = false
+  (10) Console authentication failures — ConsoleLogin where responseElements.ConsoleLogin = Failure
+  (11) CMK disable or scheduled deletion — DisableKey, ScheduleKeyDeletion
 
 risk: >
-  S3 bucket policy changes can expose private data to the public internet within
-  seconds of being applied. Detecting these changes in real time allows the
-  security team to revert inadvertent or malicious public access configurations
-  before they are discovered and exploited by external actors or crawlers.
+  Without real-time CloudWatch alarms on these events, security-critical actions
+  — root login, IAM policy changes, CloudTrail being disabled, security groups
+  opened — occur silently. Detection relies on periodic manual log review, which
+  is impractical at scale and typically happens hours or days after the event.
+  These 11 alarm patterns represent the minimum viable real-time detection layer
+  for an AWS account and are the baseline expected by SOC2 auditors and CIS
+  assessors.
 
 verification:
-  - "Verify the metric filter covers PutBucketPolicy, DeleteBucketPolicy, and PutBucketAcl events: aws logs describe-metric-filters --log-group-name <trail-log-group>"
-  - "Confirm S3 data events are enabled in CloudTrail if bucket-level API calls are required: aws cloudtrail get-event-selectors --trail-name <trail-name>"
-  - "Confirm the alarm threshold is >= 1 with an evaluation period of 300 seconds or less"
-  - "Verify the SNS topic has confirmed subscriptions and delivers alerts to an actively monitored channel"
-  - "Cross-check with AWS Config rule s3-bucket-public-read-prohibited and s3-bucket-public-write-prohibited for complementary coverage"
+  - "For each of the 11 events: aws logs describe-metric-filters --log-group-name <cloudtrail-log-group> and confirm a filter exists with the correct pattern."
+  - "For each filter: aws cloudwatch describe-alarms — confirm Threshold=1, ComparisonOperator=GreaterThanOrEqualToThreshold, AlarmActions contains SNS ARN."
+  - "Confirm each SNS topic has at least one confirmed subscription: aws sns list-subscriptions-by-topic --topic-arn <arn> | jq '.Subscriptions[] | select(.SubscriptionArn != \"PendingConfirmation\")'"
+  - "AWS Security Hub CIS v3.0 controls 4.1 through 4.11 map to these alarms — enable Security Hub and confirm all 11 are passing."
 
 compliance:
   - framework: "CIS AWS Foundations"
-    control: "4.8"
+    control: "4.1-4.11"
     version: "3.0"
   - framework: "SOC2"
     control: "CC7.2"
   - framework: "NIST 800-53"
-    control: "AU-12"
+    control: "SI-4"
 
 references:
-  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html"
   - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
-  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-overview.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-8"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html"

@@ -1,0 +1,44 @@
+id: "csmm-dat-009"
+name: "EFS File System Encryption at Rest"
+level: 1
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All Amazon EFS file systems must have encryption at rest enabled. Encryption
+  must be configured at creation time — it cannot be enabled on an existing
+  unencrypted file system. EFS encryption at rest uses AWS KMS and should
+  use a customer-managed KMS key rather than the AWS-managed default key,
+  so that key access can be independently controlled and audited.
+
+risk: >
+  An unencrypted EFS file system exposes all mounted data to anyone who gains
+  access to the underlying storage infrastructure. EFS is commonly used for
+  shared application data, container persistent volumes, and home directories
+  — making it a high-value target. Unlike S3, EFS does not have a bucket-level
+  public access block; its exposure surface is controlled entirely by mount
+  target security groups and IAM. Encryption at rest is a last line of defense
+  if those controls fail or are misconfigured.
+
+verification:
+  - "List all EFS file systems: aws efs describe-file-systems | jq '.FileSystems[] | {FileSystemId, Encrypted, KmsKeyId}'"
+  - "Confirm Encrypted: true for every file system. Any file system with Encrypted: false cannot be fixed in place — it must be migrated to a new encrypted file system."
+  - "Confirm KmsKeyId is set to a customer-managed CMK ARN, not the AWS-managed key (alias/aws/elasticfilesystem)."
+  - "AWS Config rule: efs-encrypted-check — deploy and confirm zero non-compliant resources."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.4.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/efs-encrypted-check.html"
+  - "https://docs.aws.amazon.com/efs/latest/ug/using-encryption.html"

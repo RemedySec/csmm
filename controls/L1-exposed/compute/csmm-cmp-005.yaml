@@ -1,0 +1,44 @@
+id: "csmm-cmp-005"
+name: "Lambda Function Resource Policies Do Not Allow Public Access"
+level: 1
+pillar: "compute"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  No AWS Lambda function resource-based policy may grant invoke permissions to
+  Principal: "*" without a restrictive condition (e.g. aws:PrincipalOrgID or
+  aws:SourceAccount). A Lambda function with an unconditioned Principal: "*"
+  in its resource policy is publicly invocable by any AWS identity or, depending
+  on the function URL configuration, directly from the internet. All such
+  functions must be remediated by scoping the principal to specific accounts,
+  services, or organization IDs.
+
+risk: >
+  A publicly invokable Lambda function exposes whatever logic and data access
+  the function performs to unauthenticated or arbitrary callers. Functions that
+  process data, access S3, query databases, or call other AWS services become
+  an open API for attackers. Lambda function URLs with AuthType: NONE are
+  internet-accessible with no IAM authentication — a common misconfiguration
+  when developers create functions for testing and forget to restrict access.
+
+verification:
+  - "List all Lambda functions: aws lambda list-functions --query 'Functions[].FunctionName'"
+  - "For each function: aws lambda get-policy --function-name <name> | jq '.Policy | fromjson | .Statement[] | select(.Principal == \"*\" or .Principal.AWS == \"*\")' — expect empty."
+  - "Check function URLs: aws lambda list-function-url-configs --function-name <name> | jq '.FunctionUrlConfigs[] | select(.AuthType == \"NONE\")' — any result is a critical finding."
+  - "AWS Config rule: lambda-function-public-access-prohibited — deploy and confirm zero non-compliant resources."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "N/A"
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
+
+references:
+  - "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html"
+  - "https://docs.aws.amazon.com/lambda/latest/dg/lambda-urls.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/lambda-function-public-access-prohibited.html"

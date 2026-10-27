@@ -1,32 +1,32 @@
 id: "csmm-net-005"
-name: "ALB/NLB HTTPS Only"
+name: "CloudFront Enforce HTTPS"
 level: 1
 pillar: "networking"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All Application Load Balancers (ALBs) and Network Load Balancers (NLBs) must accept
-  traffic exclusively over HTTPS/TLS. HTTP listeners on port 80 must either be absent or
-  configured with a redirect rule (HTTP 301) to HTTPS — they must not forward traffic
-  directly to backend targets. ALBs must use an ACM-managed TLS certificate. Enforce using
-  AWS Config rule 'alb-http-to-https-redirection-check' and Security Hub control
-  ELBv2.1.
+  All CloudFront distributions must be configured with a viewer protocol policy of
+  'redirect-to-https' or 'https-only' for all cache behaviors. The distribution must use
+  a custom SSL/TLS certificate (ACM) rather than the CloudFront default certificate when
+  serving traffic on a custom domain. The minimum protocol version for viewer connections
+  must be TLSv1.2_2021 or newer. Enforce using the AWS Config rule
+  'cloudfront-viewer-policy-https'.
 
 risk: >
-  Unencrypted HTTP traffic transmits authentication headers, session tokens, API keys, and
-  user data in plaintext. Any network-layer observer on the path between the client and the
-  load balancer — including ISPs, shared Wi-Fi networks, or a compromised intermediate hop —
-  can passively capture this data. In multi-tenant or shared-infrastructure environments,
-  unencrypted inter-service traffic is also visible to other tenants via packet capture on
-  shared network segments.
+  CloudFront distributions that allow HTTP viewer connections permit man-in-the-middle
+  (MITM) attacks where an attacker on the client's network intercepts and modifies traffic
+  before it reaches the CloudFront edge. This is especially critical for CloudFront
+  distributions serving web applications with login forms, API endpoints, or authenticated
+  content, as credentials and session tokens can be captured in transit. HTTP also enables
+  SSL stripping attacks that silently downgrade HTTPS sessions to HTTP without user awareness.
 
 verification:
-  - "Run: aws elbv2 describe-listeners --load-balancer-arn <arn> and verify no listener with Protocol: HTTP has a DefaultActions type of 'forward' — only 'redirect' with StatusCode 301 or 302 is permitted."
-  - "Confirm AWS Config rule 'alb-http-to-https-redirection-check' is ENABLED and reports COMPLIANT."
-  - "Use curl -v http://<alb-dns> and verify a 301 redirect to https:// is returned rather than a 200 response."
-  - "Verify all ACM certificates attached to ALB listeners are valid, not expired, and auto-renewal is enabled (Domain Validation or DNS validation)."
-  - "For NLBs with TLS listeners, confirm the TLS policy is TLS-1-2-2017-01 or newer (see csmm-net-007)."
+  - "Run: aws cloudfront list-distributions | jq '.DistributionList.Items[] | {Id: .Id, Behaviors: [.DefaultCacheBehavior.ViewerProtocolPolicy, .CacheBehaviors.Items[].ViewerProtocolPolicy]}' — all values must be 'redirect-to-https' or 'https-only', never 'allow-all'."
+  - "Confirm AWS Config rule 'cloudfront-viewer-policy-https' is ENABLED and reports COMPLIANT."
+  - "For each distribution, verify MinimumProtocolVersion is TLSv1.2_2021 under the viewer certificate configuration."
+  - "Use curl -v http://<cloudfront-domain> and confirm a 301 or 302 redirect to https:// is returned."
+  - "Verify ACM certificates for custom domains are in us-east-1 (required for CloudFront) and are not expired."
 
 compliance:
   - framework: "SOC2"
@@ -37,7 +37,7 @@ compliance:
     control: "SEC 08 — How do you protect your data in transit?"
 
 references:
-  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
-  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#redirect-actions"
-  - "https://docs.aws.amazon.com/config/latest/developerguide/alb-http-to-https-redirection-check.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-1"
+  - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html"
+  - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/cloudfront-viewer-policy-https.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-3"

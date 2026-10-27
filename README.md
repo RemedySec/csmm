@@ -19,7 +19,7 @@ Overall: Level 2 Guarded — 58/100
 
 CSMM is an open, scored, leveled maturity model for AWS cloud security. It defines **WHAT** to secure (controls), **WHEN** to secure it (maturity levels), and **HOW** to measure progress (scoring).
 
-Most security tools stop at configuration checks — is MFA on? Is the bucket public? CSMM starts there but goes far beyond. **The real value is in Levels 3–5**, where CSMM scores the architectural decisions and security processes that separate a compliant org from a truly secure one:
+Most security tools stop at configuration checks — is MFA on? Is the bucket public? CSMM starts there but goes far beyond. **The real value is in Levels 3–5**, where CSMM scores the architectural decisions and security processes that compliance checklists miss entirely:
 
 - **Data perimeters** — are your resources locked to trusted networks and identities?
 - **ABAC/RBAC** — is your access model structured, or a sprawl of ad-hoc inline policies?
@@ -31,26 +31,37 @@ Configuration scanners can't tell you whether your IAM architecture is sound —
 
 ---
 
-## Beyond Configuration Checks
+## The Maturity Levels
 
 ```
-L1–L2  Configuration & Guardrails     ← What scanners cover
-       MFA, SCPs, encryption, CloudTrail
+L1  Exposed      — Eliminate active exposure
+    No open security groups, no public data stores,
+    MFA enforced, root locked down, encryption at rest.
+    Evidence: binary pass/fail on each control.
 
-L3     Security Architecture           ← Where CSMM diverges
-       Data perimeters, ABAC/RBAC, least privilege
-       reviews, cross-account trust, permission boundaries
+L2  Guarded      — Preventive guardrails + visibility
+    Org-wide SCPs, GuardDuty, VPC Flow Logs, Security Hub,
+    CIS CloudWatch alarms, IMDSv2, no secrets in code.
+    Evidence: automated checks and alert backlogs.
 
-L4     Continuous Verification         ← Process maturity
-       Access analysis, JIT access, IaC security gates,
-       drift detection
+L3  Hardened     — Deliberate access architecture
+    Permission boundaries, ABAC/RBAC, data perimeters,
+    VPC endpoint policies, KMS key governance,
+    cross-account trust controls, WAF.
+    Evidence: policy analysis and design review.
 
-L5     Autonomous Security             ← Self-healing operations
-       Auto-remediation, policy drift auto-revert,
-       zero standing privilege
+L4  Verified     — Governed through code and process
+    IaC scanning in CI/CD, Access Analyzer, JIT access,
+    DR architecture tested, hardened image pipeline.
+    Evidence: pipeline outputs, test results, review records.
+
+L5  Autonomous   — Self-correcting without human intervention
+    Auto-remediation, SOAR, automated secret rotation,
+    self-healing infrastructure on drift detection.
+    Evidence: playbook logs and mean-time-to-remediate.
 ```
 
-L1–L2 gets you compliant. **L3–L5 gets you secure.**
+Each level builds a distinct capability — later levels don't replace earlier ones, they add a new type of assurance on top. **L1–L2 stops common attacks. L3 limits blast radius by design. L4 proves the posture is maintained. L5 closes the detection-to-remediation loop.**
 
 ---
 
@@ -78,20 +89,20 @@ L1–L2 gets you compliant. **L3–L5 gets you secure.**
 ║    MFA, root lockdown, public access blocks     ║
 ║    default SG restrictions, basic encryption    ║
 ╚═════════════════════════════════════════════════╝
-┃ IAM 30% ┃ NET 20% ┃ STR 20% ┃ CMP 15% ┃ MON 15% ┃
+┃ IAM 30% ┃ NET 20% ┃ DAT 20% ┃ CMP 15% ┃ MON 15% ┃
 ```
 
 Each level builds on the one below it. **Levels are gated** — you must score ≥80% on a level before the next unlocks. You can't skip MFA by being great at ABAC.
 
 ### Levels × Pillars
 
-| | IAM (30%) | Networking (20%) | Storage (20%) | Compute (15%) | Monitoring (15%) |
+| | IAM (30%) | Networking (20%) | Data (20%) | Compute (15%) | Monitoring (15%) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | **L5 Autonomous** | Policy drift auto-revert | Anomaly auto-isolate | Automated secret rotation | Self-healing infra | Automated incident response (SOAR) |
 | **L4 Verified** | Access Analyzer, JIT access, IaC gates | DNS security, drift detection | Backup architecture, Object Lock | Hardened image pipeline, SSM-only access | Threat hunting, security metrics |
 | **L3 Hardened** | ABAC/RBAC, data perimeters, cross-account trust, least privilege reviews | Network segmentation, VPC endpoints, egress filtering, DDoS strategy | Data classification, key mgmt architecture, secrets management | Container security, workload isolation, patch management | Observability architecture, incident response runbooks |
-| **L2 Guarded** | SCPs, temp credentials, CloudTrail | Flow logs, NACLs, GuardDuty | Versioning, backups, encryption | IMDSv2, launch templates | Security Hub, 12 CloudWatch alarms |
-| **L1 Exposed** | MFA, root lockdown, SSO, key rotation | No open SSH/RDP, HTTPS, TLS 1.2 | S3 public block, RDS private, encryption | EBS encrypt, no public IP/AMI | — |
+| **L2 Guarded** | SCPs, temp credentials, OIDC scoping | Flow logs, NACLs, GuardDuty | Versioning, backups, S3 access logging | IMDSv2, ECR scan, no Lambda secrets | Security Hub, CIS CloudWatch alarms |
+| **L1 Exposed** | MFA, root lockdown, SSO, key rotation | No unrestricted SGs, HTTPS, TLS 1.2 | S3 public block, RDS private, EBS/EFS encryption | No public IP/AMI, EKS private API, Lambda no public | CloudTrail, Config enabled |
 
 ### Scoring at a Glance
 
@@ -111,7 +122,7 @@ Per-Control Pass/Fail  →  × severity weight  →  Level Score (0–100)
 |----------|--------|-|-------|--------|-|--------|--------|
 | Critical | 4× | | L1 | 0.35 | | IAM | 30% |
 | High | 3× | | L2 | 0.25 | | Networking | 20% |
-| Medium | 2× | | L3 | 0.20 | | Storage | 20% |
+| Medium | 2× | | L3 | 0.20 | | Data | 20% |
 | Low | 1× | | L4 | 0.12 | | Compute | 15% |
 | | | | L5 | 0.08 | | Monitoring | 15% |
 
@@ -119,7 +130,7 @@ Per-Control Pass/Fail  →  × severity weight  →  Level Score (0–100)
 
 ## Quick Start
 
-Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](self-assessment/checklist.md)
+Start your assessment with our checklist: [self-assessment/checklist.md](self-assessment/checklist.md)
 
 ---
 
@@ -127,11 +138,11 @@ Self-assess in 10 minutes with our checklist: [self-assessment/checklist.md](sel
 
 - [spec/](spec/) — Full model specification
 - [controls/](controls/) — Control definitions by pillar and level
-- [docs/iam-pillar.md](docs/iam-pillar.md) — IAM pillar deep dive (26 controls)
-- [docs/networking-pillar.md](docs/networking-pillar.md) — Networking pillar deep dive (16 controls)
-- [docs/storage-pillar.md](docs/storage-pillar.md) — Storage pillar deep dive (21 controls)
-- [docs/compute-pillar.md](docs/compute-pillar.md) — Compute pillar deep dive (17 controls)
-- [docs/monitoring-pillar.md](docs/monitoring-pillar.md) — Monitoring pillar deep dive (21 controls)
+- [docs/iam-pillar.md](docs/iam-pillar.md) — IAM pillar deep dive (29 controls)
+- [docs/networking-pillar.md](docs/networking-pillar.md) — Networking pillar deep dive (23 controls)
+- [docs/data-pillar.md](docs/data-pillar.md) — Data pillar deep dive (24 controls)
+- [docs/compute-pillar.md](docs/compute-pillar.md) — Compute pillar deep dive (14 controls)
+- [docs/monitoring-pillar.md](docs/monitoring-pillar.md) — Monitoring pillar deep dive (12 controls)
 - [self-assessment/](self-assessment/) — Checklist and scoring guide
 
 ---

@@ -1,0 +1,44 @@
+id: "csmm-dat-010"
+name: "CloudTrail S3 Bucket Encryption"
+level: 2
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  The S3 bucket designated to receive CloudTrail log files must have
+  server-side encryption enabled using either SSE-S3 or SSE-KMS with a
+  customer-managed KMS key. SSE-KMS with a CMK is preferred, as it allows
+  independent control of key rotation, access policies on the key itself, and
+  provides an additional audit trail in AWS KMS for every decryption event.
+  Bucket-level default encryption must be set so that all objects are encrypted
+  regardless of the uploading service's configuration.
+
+risk: >
+  Unencrypted audit logs stored in S3 expose sensitive operational data —
+  including API call patterns, IAM principal identities, source IP addresses,
+  and request parameters — to anyone who gains read access to the bucket or the
+  underlying storage layer. CloudTrail logs are a high-value target because they
+  reveal the scope and methods of an attacker's actions; their exposure compounds
+  a breach by providing adversaries with intelligence about detection capabilities
+  and incident response activities.
+
+verification:
+  - "Identify the CloudTrail S3 bucket from aws cloudtrail describe-trails (S3BucketName field) and run aws s3api get-bucket-encryption --bucket <name>."
+  - "Confirm ServerSideEncryptionConfiguration is present and uses AES256 (SSE-S3) or aws:kms (SSE-KMS)."
+  - "If SSE-KMS is used, verify the CMK has a key policy granting CloudTrail service access to GenerateDataKey and the security team access for audit purposes."
+  - "Deploy AWS Config rule s3-bucket-server-side-encryption-enabled and verify the CloudTrail bucket is compliant."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.7"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+
+references:
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-server-side-encryption-enabled.html"

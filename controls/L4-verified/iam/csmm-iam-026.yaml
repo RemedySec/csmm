@@ -1,38 +1,46 @@
 id: "csmm-iam-026"
-name: "IaC Scanned in CI/CD Before Merge"
+name: "Temporary Elevated Access (JIT/Break-Glass)"
 level: 4
 pillar: "iam"
-priority: "critical"
-severity_weight: 4
+priority: "high"
+severity_weight: 3
 
 description: >
-  All Infrastructure-as-Code pull requests must pass automated security scanning
-  before merging to the main branch. Scanning must cover static analysis for
-  misconfigurations (e.g., tfsec, Checkov, or Snyk IaC) and policy-as-code
-  evaluation (e.g., OPA or Sentinel). The CI/CD pipeline must be configured to
-  block merge on any HIGH or CRITICAL severity finding without an explicit approval
-  exception documented in the change management system.
+  Zero IAM roles or SSO permission sets with AdministratorAccess or Action: '*' /
+  Resource: '*' policies may remain active for more than 4 hours. All administrative
+  access must use SSO permission sets with session duration set to 4 hours maximum,
+  or STS AssumeRole with a DurationSeconds of 14400 or less and an
+  aws:MultiFactorAuthPresent condition in the trust policy. Break-glass roles for
+  emergency access must require MFA, generate high-severity alerts, and have sessions
+  limited to a maximum of 4 hours.
 
 risk: >
-  Unscanned IaC changes deploy misconfigurations directly to production environments
-  where they may persist until the next audit cycle. Unlike application code where
-  runtime errors are often immediately visible, infrastructure misconfigurations such
-  as open security groups, disabled encryption, or excessive IAM permissions can
-  remain silent and exploitable for months without proactive detection in the pipeline.
+  Standing privileged access to production creates a permanent high-value target.
+  If an administrator's credentials are compromised, the attacker immediately
+  inherits full production access without any additional challenge. JIT access
+  ensures that even compromised privileged identities have no standing permissions
+  to exploit — an attacker would need to trigger the approval workflow, which
+  generates visible alerts and requires human approval.
 
 verification:
-  - "Review CI/CD pipeline definitions for all IaC repositories and confirm a security scanning step exists that runs on every pull request"
-  - "Trigger a test PR containing a known misconfiguration (e.g., an S3 bucket with public access) and confirm the pipeline fails and blocks merge"
-  - "Review the scanner configuration to confirm HIGH and CRITICAL checks are set to fail the build rather than warn"
-  - "Verify branch protection requires the IaC scan status check: gh api repos/{owner}/{repo}/branches/main --jq '.protection.required_status_checks.contexts' must include the scan step name. Exceptions require a PR approval from a user with the security-reviewer team membership."
+  - "Run: aws iam list-roles and inspect attached policies. Any role with Action: '*' on Resource: '*' must either (a) have tag RoleType=BreakGlass with aws:MultiFactorAuthPresent in its trust policy, or (b) be an SSO-managed role with MaxSessionDuration <= 14400."
+  - "Verify JIT access requests are logged with requestor, approver, duration, and justification"
+  - "Test that elevated sessions automatically expire after the configured duration (maximum 4 hours)"
+  - "Confirm break-glass role assumption triggers a high-severity alert in the SIEM/PagerDuty"
+  - "Query CloudTrail for sts:AssumeRole events on break-glass roles in the last 30 days. Each event must have a corresponding SNS notification within 5 minutes (verify via SNS delivery logs)."
 
 compliance:
   - framework: "SOC2"
-    control: "CC8.1"
+    control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "SA-11"
+    control: "AC-2(2)"
+  - framework: "ISO 27001"
+    control: "A.9.2.3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://www.checkov.io/1.Welcome/Quick%20Start.html"
-  - "https://docs.aws.amazon.com/codepipeline/latest/userguide/tutorials.html"
-  - "https://developer.hashicorp.com/sentinel/docs/concepts/policy-as-code"
+  - "https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html"
+  - "https://aws.amazon.com/blogs/security/managing-temporary-elevated-access-to-your-aws-environment/"
+  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/configure-temporary-elevated-access-to-aws-accounts.html"

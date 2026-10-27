@@ -1,40 +1,51 @@
 id: "csmm-cmp-006"
-name: "Enforce IMDSv2 via SCP"
+name: "IMDSv2 Enforced on All EC2 Instances and Blocked at Org Level"
 level: 2
 pillar: "compute"
-priority: "high"
-severity_weight: 3
+priority: "critical"
+severity_weight: 4
 
 description: >
-  A Service Control Policy must deny the ec2:RunInstances action when the
-  MetadataOptions.HttpTokens parameter is not set to required. This SCP
-  enforcement layer prevents any principal in member accounts from launching
-  new EC2 instances with IMDSv1 enabled, complementing instance-level
-  configuration checks with an organizational guardrail that cannot be
-  overridden by account administrators.
+  IMDSv2 must be enforced at two layers:
+  (1) Instance level — all EC2 instances must have HttpTokens set to required
+  in their metadata options, disabling unauthenticated IMDSv1 requests.
+  Apply via aws ec2 modify-instance-metadata-options and enforce with AWS
+  Config rule ec2-imdsv2-check.
+  (2) Organization level — an SCP must deny ec2:RunInstances when
+  ec2:MetadataHttpTokens is not required, preventing any new IMDSv1-enabled
+  instance from being launched across all member accounts.
+  The account-level IMDS default must also be set to required via
+  aws ec2 modify-instance-metadata-defaults.
 
 risk: >
-  Without an SCP enforcing IMDSv2 at launch, individual account administrators
-  or automated deployment pipelines can create new instances with IMDSv1
-  enabled, either through misconfiguration or deliberate policy. A single new
-  IMDSv1-enabled instance exposed to an SSRF vulnerability can be used to
-  exfiltrate IAM credentials, potentially compromising the entire AWS account.
-  The SCP ensures that even if instance-level controls are not applied
-  correctly, the API call to create a vulnerable instance is blocked outright.
+  IMDSv1 is exploitable through Server-Side Request Forgery (SSRF) vulnerabilities
+  in web applications running on EC2. An attacker who can cause a server-side HTTP
+  request to 169.254.169.254 retrieves the instance's IAM role credentials with
+  full permissions — no authentication required. This has been the root cause of
+  several high-profile cloud breaches. Without SCP enforcement, developers and
+  pipelines can create new vulnerable instances even after existing ones are
+  remediated.
 
 verification:
-  - "Inspect SCPs for a Deny on ec2:RunInstances with a condition requiring ec2:MetadataHttpTokens equals required."
-  - "Confirm the SCP is attached to the organization root or all applicable OUs and has no overly broad NotPrincipal exemptions."
-  - "Attempt to launch an EC2 instance with --metadata-options HttpTokens=optional from a member account and confirm the request is denied."
-  - "Verify the SCP does not inadvertently block legitimate launches by testing a compliant launch with --metadata-options HttpTokens=required."
+  - "Instances: aws ec2 describe-instances | jq '.Reservations[].Instances[] | select(.MetadataOptions.HttpTokens != \"required\") | .InstanceId' — expect empty."
+  - "Account default: aws ec2 get-instance-metadata-defaults | jq '.InstanceMetadataDefaults.HttpTokens' — expect 'required'."
+  - "SCP: inspect organization SCPs for a Deny on ec2:RunInstances with Condition StringNotEquals ec2:MetadataHttpTokens required — confirm attached to root or all production OUs."
+  - "Test SCP: attempt aws ec2 run-instances --metadata-options HttpTokens=optional from a member account — expect explicit Deny."
+  - "AWS Config rule: ec2-imdsv2-check — confirm zero non-compliant instances in all regions."
 
 compliance:
+  - framework: "CIS AWS Foundations"
+    control: "5.6"
+    version: "3.0"
   - framework: "SOC2"
     control: "CC6.1"
   - framework: "NIST 800-53"
     control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your compute resources?"
 
 references:
   - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/ec2-imdsv2-check.html"
   - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_ec2.html"
   - "https://aws.amazon.com/blogs/security/get-the-full-benefits-of-imdsv2-and-disable-imdsv1-across-your-aws-infrastructure/"

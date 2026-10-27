@@ -1,42 +1,43 @@
 id: "csmm-net-004"
-name: "No Auto-Assign Public IPs in Subnets"
+name: "ALB/NLB HTTPS Only"
 level: 1
 pillar: "networking"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All VPC subnets must have the MapPublicIpOnLaunch attribute set to false. EC2 instances
-  that require internet access must use NAT Gateways for outbound traffic. Instances that
-  require inbound internet exposure must sit behind an ALB, NLB, or CloudFront distribution —
-  not be directly internet-reachable. Use the AWS Config rule
-  'subnet-auto-assign-public-ip-disabled' to detect non-compliant subnets. Enforce at
-  infrastructure provisioning time via IaC linting (cfn-guard, tfsec) and Terraform policies.
+  All Application Load Balancers (ALBs) and Network Load Balancers (NLBs) must accept
+  traffic exclusively over HTTPS/TLS. HTTP listeners on port 80 must either be absent or
+  configured with a redirect rule (HTTP 301) to HTTPS — they must not forward traffic
+  directly to backend targets. ALBs must use an ACM-managed TLS certificate. Enforce using
+  AWS Config rule 'alb-http-to-https-redirection-check' and Security Hub control
+  ELBv2.1.
 
 risk: >
-  When MapPublicIpOnLaunch is enabled, every EC2 instance launched into that subnet
-  automatically receives a public IPv4 address, regardless of whether the engineer intended
-  public exposure. This is a common source of accidental internet exposure — a developer
-  launches a test instance into a misconfigured subnet and it becomes immediately reachable
-  from the internet. Public IPs also bypass security group rules that reference private CIDR
-  ranges as the source, making network segmentation analysis more complex.
+  Unencrypted HTTP traffic transmits authentication headers, session tokens, API keys, and
+  user data in plaintext. Any network-layer observer on the path between the client and the
+  load balancer — including ISPs, shared Wi-Fi networks, or a compromised intermediate hop —
+  can passively capture this data. In multi-tenant or shared-infrastructure environments,
+  unencrypted inter-service traffic is also visible to other tenants via packet capture on
+  shared network segments.
 
 verification:
-  - "Run: aws ec2 describe-subnets | jq '[.Subnets[] | select(.MapPublicIpOnLaunch == true)] | length' — expected 0 in production environments."
-  - "Confirm AWS Config rule 'subnet-auto-assign-public-ip-disabled' is ENABLED and reports COMPLIANT across all regions."
-  - "For any subnet where public IP assignment is a hard requirement: Subnets with MapPublicIpOnLaunch=true must have tags: PublicIPException=approved, ExceptionOwner={team}, ExceptionExpiry={YYYY-MM-DD}. Subnets with expired or missing exception tags that have MapPublicIpOnLaunch=true fail this control."
-  - "Verify that Terraform modules for VPC provisioning set map_public_ip_on_launch = false by default, and tfsec or Checkov rules flag any override."
+  - "Run: aws elbv2 describe-listeners --load-balancer-arn <arn> and verify no listener with Protocol: HTTP has a DefaultActions type of 'forward' — only 'redirect' with StatusCode 301 or 302 is permitted."
+  - "Confirm AWS Config rule 'alb-http-to-https-redirection-check' is ENABLED and reports COMPLIANT."
+  - "Use curl -v http://<alb-dns> and verify a 301 redirect to https:// is returned rather than a 200 response."
+  - "Verify all ACM certificates attached to ALB listeners are valid, not expired, and auto-renewal is enabled (Domain Validation or DNS validation)."
+  - "For NLBs with TLS listeners, confirm the TLS policy is TLS-1-2-2017-01 or newer (see csmm-net-007)."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.6"
+    control: "CC6.7"
   - framework: "NIST 800-53"
-    control: "SC-7"
+    control: "SC-8"
   - framework: "AWS Well-Architected"
-    control: "SEC 05 — How do you protect your network resources?"
+    control: "SEC 08 — How do you protect your data in transit?"
 
 references:
-  - "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/modify-subnets.html#subnet-public-ip"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-15"
+  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
+  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#redirect-actions"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/alb-http-to-https-redirection-check.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-1"

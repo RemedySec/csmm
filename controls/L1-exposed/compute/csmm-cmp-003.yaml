@@ -1,34 +1,35 @@
 id: "csmm-cmp-003"
-name: "Block Public AMI Sharing"
+name: "Block Public EBS Snapshot Sharing"
 level: 1
 pillar: "compute"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All custom AMIs (Amazon Machine Images) must have their launch permissions set to private.
-  No AMI in any account may be set to public (LaunchPermission: Group: all). Enforce this
-  via an SCP that denies ec2:ModifyImageAttribute when the request would grant group
-  'all' launch permission. Periodically audit AMI visibility using the AWS Config rule
-  'no-unrestricted-route-to-igw' and a custom Lambda or AWS Config custom rule that queries
-  ec2:describe-images with Executable: all. Revoke any unintended public AMI immediately
-  using aws ec2 modify-image-attribute --image-id <ami-id> --launch-permission
-  '{"Remove":[{"Group":"all"}]}'.
+  All EBS snapshots in every AWS account and region must be set to private. No snapshot may
+  have its createVolumePermission granted to Group: all. Enforce via an SCP that denies
+  ec2:ModifySnapshotAttribute when the request grants group 'all' create volume permission.
+  Audit continuously using the AWS Config rule 'ebs-snapshot-public-restorable-check'. Any
+  public snapshot must be immediately revoked using aws ec2 modify-snapshot-attribute
+  --snapshot-id <id> --attribute createVolumePermission --operation-type remove
+  --group-names all.
 
 risk: >
-  AMIs built from EC2 instances frequently contain sensitive data baked into the image:
-  application configuration files, database connection strings, hard-coded API keys and
-  secrets, SSH authorized_keys, TLS certificates, and OS-level credentials. A publicly
-  shared AMI exposes this entire contents to any AWS account in any region. Automated
-  scanners continuously enumerate public AMIs in search of credentials. Even a briefly
-  public AMI can be copied by a threat actor before it is made private.
+  EBS snapshots are point-in-time copies of entire block storage volumes and contain
+  everything written to the volume at the time of the snapshot: database files, application
+  data, secrets baked into the operating system, environment variable files, SSH host keys,
+  and any credentials cached in memory that were flushed to disk. A publicly accessible
+  snapshot can be restored to a volume by any AWS account, giving an attacker a full forensic
+  copy of the disk. Automated tools actively scan for and immediately restore any public EBS
+  snapshots to harvest credentials and data.
 
 verification:
-  - "Run: aws ec2 describe-images --owners self --executable-users all | jq '.Images | length' — expected 0."
-  - "Run this check across all active regions using: aws ec2 describe-regions | jq -r '.Regions[].RegionName' | xargs -I{} aws ec2 describe-images --region {} --owners self --executable-users all."
-  - "Verify an SCP or IAM permission boundary blocks ec2:ModifyImageAttribute calls that include Group: all in the launch permission."
-  - "Confirm an automated weekly scan (Lambda or Security Hub custom insight) alerts on any AMI with public launch permissions."
-  - "Validate that the AMI build pipeline (Packer, EC2 Image Builder) does not include a step that sets launch permissions to public."
+  - "Run: aws ec2 describe-snapshots --owner-ids self --restorable-by-user-ids all | jq '.Snapshots | length' — expected 0."
+  - "Run this check across all active regions."
+  - "Confirm AWS Config rule 'ebs-snapshot-public-restorable-check' is ENABLED and reports COMPLIANT in all regions."
+  - "Verify an SCP is in place denying ec2:ModifySnapshotAttribute with a condition that prevents adding Group: all to createVolumePermission."
+  - "Confirm the backup automation (AWS Backup, DLM, custom Lambda) does not have any step that sets snapshots to public post-creation."
+  - "Verify GuardDuty finding 'Discovery:EC2/SnapshotTampering' alerting is active in all regions."
 
 compliance:
   - framework: "SOC2"
@@ -39,8 +40,8 @@ compliance:
     control: "SEC 07 — How do you classify your data?"
 
 references:
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html"
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-explicit.html#sharingamis-removing"
-  - "https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-image-attribute.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-25"
-  - "https://docs.aws.amazon.com/imagebuilder/latest/userguide/security-best-practices.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/ebs-snapshot-public-restorable-check.html"
+  - "https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-snapshot-attribute.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-39"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"

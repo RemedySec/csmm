@@ -1,46 +1,53 @@
 id: "csmm-net-001"
-name: "No SSH (22) Open to 0.0.0.0/0"
+name: "No Security Group Allows Unrestricted Inbound Access from Internet"
 level: 1
 pillar: "networking"
 priority: "critical"
 severity_weight: 4
 
 description: >
-  No security group in any VPC may have an inbound rule permitting TCP port 22 (SSH) from
-  0.0.0.0/0 or ::/0. SSH access to EC2 instances must be routed exclusively through AWS
-  Systems Manager Session Manager, a bastion host in a restricted subnet, or a VPN/Direct
-  Connect endpoint. Enforce via AWS Config rule 'restricted-ssh' and remediate automatically
-  using AWS Config Auto Remediation with the AWS-DisablePublicAccessForSecurityGroup SSM
-  document.
+  No security group inbound rule may allow unrestricted access from 0.0.0.0/0
+  or ::/0 on any of the following: SSH (port 22), RDP (port 3389), or all ports
+  (protocol -1 or port range 0-65535). These represent the highest-risk exposure
+  patterns — administrative ports open to the entire internet, or a complete
+  absence of port-level filtering. All such rules must be removed and replaced
+  with rules scoped to specific known CIDRs, a bastion host security group, or
+  removed entirely in favor of AWS Systems Manager Session Manager for
+  administrative access.
 
 risk: >
-  Publicly accessible SSH is the single most exploited attack vector in cloud environments.
-  Automated scanners continuously probe the entire IPv4 address space for open port 22 within
-  minutes of an instance launching. Successful brute-force or exploitation of SSH grants
-  shell access to the underlying instance, from which an attacker can harvest IAM instance
-  profile credentials, move laterally within the VPC, and exfiltrate data. Session Manager
-  eliminates the need for any inbound port exposure.
+  Security groups with unrestricted inbound access on administrative ports or all
+  ports are among the most exploited misconfigurations in AWS. SSH and RDP exposed
+  to the internet are continuously scanned and brute-forced by automated tooling
+  within minutes of creation. A security group allowing all traffic from the internet
+  is functionally equivalent to no firewall — every port on associated instances is
+  reachable globally, exposing internal APIs, debug endpoints, and database ports
+  to trivial exploitation. These are consistently the highest-frequency critical
+  findings in cloud security assessments.
 
 verification:
-  - "Run: aws ec2 describe-security-groups --filters Name=ip-permission.to-port,Values=22 Name=ip-permission.cidr,Values=0.0.0.0/0 | jq '.SecurityGroups | length' — expected 0."
-  - "Repeat the check for IPv6: --filters Name=ip-permission.ipv6-cidr,Values=::/0."
-  - "Confirm AWS Config rule 'restricted-ssh' is ENABLED and reports COMPLIANT across all regions."
-  - "Verify that at least one Systems Manager endpoint (or SSM Agent with internet access) is available in each VPC used for EC2 access, confirming Session Manager connectivity."
-  - "Confirm a preventive SCP or AWS Config auto-remediation removes any newly created SSH-open security group rule within 5 minutes."
+  - 'SSH: aws ec2 describe-security-groups --query "SecurityGroups[?IpPermissions[?((FromPort==`22`) && IpRanges[?CidrIp==`0.0.0.0/0`])]].GroupId" — expect empty.'
+  - 'RDP: same query with FromPort==`3389` — expect empty.'
+  - 'All ports: aws ec2 describe-security-groups --query "SecurityGroups[?IpPermissions[?IpProtocol==`-1` && IpRanges[?CidrIp==`0.0.0.0/0`]]].GroupId" — expect empty.'
+  - 'Repeat all three checks for IPv6: replace IpRanges[?CidrIp==''0.0.0.0/0''] with Ipv6Ranges[?CidrIpv6==''::/0''].'
+  - 'AWS Config rules: restricted-ssh, restricted-common-ports — deploy in all regions and confirm zero non-compliant resources.'
 
 compliance:
   - framework: "CIS AWS Foundations"
     control: "5.2"
+    version: "3.0"
+  - framework: "CIS AWS Foundations"
+    control: "5.3"
     version: "3.0"
   - framework: "SOC2"
     control: "CC6.6"
   - framework: "NIST 800-53"
     control: "SC-7"
   - framework: "AWS Well-Architected"
-    control: "SEC 05 — How do you protect your network resources?"
+    control: "SEC 06 — How do you protect your network resources?"
 
 references:
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
   - "https://docs.aws.amazon.com/config/latest/developerguide/restricted-ssh.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/restricted-common-ports.html"
   - "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html"
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/authorizing-access-to-an-instance.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-13"

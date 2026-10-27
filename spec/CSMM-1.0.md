@@ -34,7 +34,7 @@ CSMM is designed to be:
 A control is the atomic unit of assessment in CSMM. Each control describes a specific security behavior or configuration that should be present in a cloud environment. Controls are:
 
 - Assigned to exactly one **Level** (L1–L5).
-- Assigned to exactly one **Pillar** (IAM, Networking, Storage, Compute, Monitoring).
+- Assigned to exactly one **Pillar** (IAM, Networking, Data, Compute, Monitoring).
 - Weighted by **severity** to reflect the impact of failing that control.
 - Verified through a defined **verification** procedure (console, CLI, policy check, etc.).
 
@@ -60,7 +60,7 @@ CSMM organizes controls into five security pillars, each representing a distinct
 |-------------|--------|
 | IAM         | 30%    |
 | Networking  | 20%    |
-| Storage     | 20%    |
+| Data     | 20%    |
 | Compute     | 15%    |
 | Monitoring  | 15%    |
 
@@ -75,84 +75,98 @@ CSMM produces a single numeric overall score (0–100) by aggregating control re
 Controls are defined in YAML. Each control file (or record within a controls manifest) must conform to the following schema:
 
 ```yaml
-id: string                  # Unique identifier, e.g. IAM-L1-001
-name: string                # Short, human-readable name
-level: integer              # 1–5
-pillar: string              # IAM | Networking | Storage | Compute | Monitoring
-priority: string            # must-have | should-have | nice-to-have
-severity_weight: string     # critical | high | medium | low
-description: string         # What the control requires and why
-risk: string                # What risk is mitigated by this control
-verification:               # How to check whether the control is in place
-  method: string            # console | cli | iac | automated
-  steps:
-    - string
-compliance:                 # Optional: relevant compliance framework mappings
-  - framework: string       # e.g. CIS AWS Foundations, NIST CSF, SOC 2
-    reference: string       # e.g. CIS 1.1, NIST PR.AC-1
-references:                 # Optional: external documentation links
-  - string
+id: "csmm-<pillar>-<NNN>"  # e.g. csmm-iam-001, csmm-net-007
+name: ""                    # Short, human-readable name
+level: 1                    # 1–5
+pillar: ""                  # iam | networking | data | compute | monitoring
+priority: "critical"        # critical | high | medium | low
+severity_weight: 4          # 4=critical, 3=high, 2=medium, 1=low
+
+description: >
+  What the control requires and why. Use specific thresholds, tag names,
+  or CLI commands rather than vague language. Every control produces a
+  clear pass/fail signal.
+
+risk: >
+  Business impact if this control is absent. Focus on operational,
+  financial, or reputational consequences.
+
+verification:
+  - "Run: aws <service> <command> — expected result: <value>"
+  - "Verify <specific resource> has <specific property> set to <value>"
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "1.14"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "AC-2(3)"
+
+references:
+  - "https://docs.aws.amazon.com/..."
 ```
 
 ### Field Definitions
 
 | Field            | Type    | Required | Description |
 |------------------|---------|----------|-------------|
-| `id`             | string  | Yes      | Unique control identifier. Format: `{PILLAR}-L{N}-{SEQ}` (e.g. `IAM-L1-001`). |
+| `id`             | string  | Yes      | Unique control identifier. Format: `csmm-<pillar>-<NNN>` (e.g. `csmm-iam-001`). Pillar prefixes: `iam`, `net`, `dat`, `cmp`, `mon`. IDs are globally unique within a pillar across all levels. |
 | `name`           | string  | Yes      | A concise label (≤80 characters). |
 | `level`          | integer | Yes      | Maturity level this control belongs to (1–5). |
-| `pillar`         | string  | Yes      | One of: `IAM`, `Networking`, `Storage`, `Compute`, `Monitoring`. |
-| `priority`       | string  | Yes      | `must-have`, `should-have`, or `nice-to-have`. Informational; does not affect scoring. |
-| `severity_weight`| string  | Yes      | `critical`, `high`, `medium`, or `low`. Drives the numeric weight used in scoring. |
-| `description`    | string  | Yes      | Full description of the expected configuration or behavior. |
-| `risk`           | string  | Yes      | The security risk mitigated when this control is in place. |
-| `verification`   | object  | Yes      | Method and steps to verify the control. |
-| `compliance`     | list    | No       | Mappings to compliance frameworks and their control references. |
+| `pillar`         | string  | Yes      | One of: `iam`, `networking`, `data`, `compute`, `monitoring`. |
+| `priority`       | string  | Yes      | `critical`, `high`, `medium`, or `low`. Informational label. The numeric scoring weight is in `severity_weight`. |
+| `severity_weight`| integer | Yes      | Numeric scoring weight: 4 (critical), 3 (high), 2 (medium), 1 (low). |
+| `description`    | string  | Yes      | Full description of the expected configuration or behavior (≤3 sentences). |
+| `risk`           | string  | Yes      | Business impact if this control is not implemented. |
+| `verification`   | list    | Yes      | Ordered list of verification steps as strings. Each step must produce a clear pass/fail. |
+| `compliance`     | list    | No       | Mappings to compliance frameworks. Each entry has `framework`, `control`, and optionally `version`. |
 | `references`     | list    | No       | URLs to AWS documentation, CIS benchmarks, or other authoritative sources. |
 
 ---
 
 ## 5. Maturity Levels
 
-### L1 — Exposed (~35 controls)
+### L1 — Exposed (34 controls)
 
 **Tagline:** "Stop the basics from being completely broken."
 
 L1 covers the security hygiene that every AWS account must have, regardless of workload. Failing L1 controls represents active, exploitable exposure. An organization at L1 or below is vulnerable to trivial attacks including credential compromise, public data exposure, and lateral movement through overly permissive defaults.
 
-Key control themes: MFA enforcement, root account protection, S3 public access blocks, default security group lockdown, basic encryption at rest, GuardDuty enablement.
+Key control themes: MFA enforcement, root account protection, S3 public access blocks, default security group lockdown, basic encryption at rest, CloudTrail and Config enabled.
 
-### L2 — Guarded (~40 controls)
+### L2 — Guarded (27 controls)
 
 **Tagline:** "Gain visibility and start enforcing preventive guardrails."
 
-L2 introduces organizational controls, visibility mechanisms, and a broader application of encryption. Organizations at L2 have logging in place, basic network segmentation, and preventive guardrails that reduce the blast radius of a compromise.
+L2 introduces organizational controls, visibility mechanisms, and preventive guardrails that reduce the blast radius of a compromise. Organizations at L2 have org-wide SCPs in place, network traffic visibility, and real-time alerting on security-critical events.
 
-Key control themes: Service Control Policies (SCPs), IMDSv2 enforcement, VPC Flow Logs, CloudTrail, Network ACLs, TLS enforcement, RDS encryption, automated backups, CloudWatch metric alarms for security events, Security Hub enablement.
+Key control themes: Service Control Policies (SCPs), IMDSv2 enforcement, VPC Flow Logs, GuardDuty, Network ACLs, automated backups, CIS CloudWatch metric alarms, Security Hub.
 
-### L3 — Hardened (~35 controls)
+### L3 — Hardened (25 controls)
 
 **Tagline:** "Apply least privilege at scale and enforce data perimeters."
 
 L3 focuses on fine-grained access control, cross-account trust hygiene, and data perimeter enforcement. Organizations at L3 have moved beyond simple deny-all defaults toward intentional, auditable access models.
 
-Key control themes: IAM permission boundaries, ABAC/RBAC patterns, cross-account trust review, data perimeters (resource policies, VPC endpoints), container security baselines.
+Key control themes: IAM permission boundaries, ABAC/RBAC patterns, cross-account trust controls, data perimeters (resource policies, VPC endpoint policies), container security baselines, secrets management architecture.
 
-### L4 — Verified (~20 controls)
+### L4 — Verified (10 controls)
 
 **Tagline:** "Prove your security posture through governance and auditability."
 
-L4 ensures that security is enforced through code and process, not just configuration. Organizations at L4 can demonstrate that every resource is traceable to a source of truth and that deviations are detected and flagged.
+L4 ensures that security is enforced through code and process, not just configuration. Organizations at L4 can demonstrate that controls are in place through IaC-based evidence, not just runtime assertions.
 
-Key control themes: IaC scanning pipelines, drift detection, resource-to-source mapping, blast radius analysis, shadow IT discovery.
+Key control themes: IAM Access Analyzer, JIT/break-glass access, IaC scanning in CI/CD, backup and DR architecture, golden AMI pipelines, SSM-only instance access.
 
-### L5 — Autonomous (~10 controls)
+### L5 — Autonomous (6 controls)
 
 **Tagline:** "Security that responds faster than humans can."
 
-L5 represents the leading edge of cloud security maturity: environments where detected threats and misconfigurations trigger automated remediation without human intervention, and where zero-trust principles are enforced continuously in a closed loop.
+L5 represents the leading edge of cloud security maturity: environments where detected threats and misconfigurations trigger automated remediation without human intervention.
 
-Key control themes: Automated remediation pipelines, self-healing infrastructure, anomaly-triggered response, zero-trust enforcement loops.
+Key control themes: Automated remediation pipelines, self-healing infrastructure, SOAR-based incident response, automated secret rotation.
 
 ---
 
@@ -166,9 +180,9 @@ Identity and Access Management is weighted most heavily because the majority of 
 
 Networking controls govern the exposure surface of cloud workloads. This includes VPC design, security groups, network ACLs, ingress/egress filtering, and private connectivity. Poorly configured networking can expose internal services to the public internet or allow unrestricted lateral movement between accounts.
 
-### Storage — 20%
+### Data — 20%
 
-Storage controls protect data at rest and govern access to data stores including S3, RDS, DynamoDB, EBS, and Secrets Manager. Data exposure via misconfigured storage is one of the most common causes of publicly reported cloud breaches.
+Data controls protect data at rest and govern access to data stores including S3, RDS, DynamoDB, EBS, and Secrets Manager. Data exposure via misconfigured data stores is one of the most common causes of publicly reported cloud breaches.
 
 ### Compute — 15%
 
@@ -228,7 +242,7 @@ If `level_score(N, P) < 80` for any pillar P, then controls in level N+1 (and ab
 |------------|--------|
 | IAM        | 0.30   |
 | Networking | 0.20   |
-| Storage    | 0.20   |
+| Data    | 0.20   |
 | Compute    | 0.15   |
 | Monitoring | 0.15   |
 
@@ -262,7 +276,7 @@ CSMM is maintained as an open project. Decisions are made through a lightweight 
 1. Proposals are submitted as issues or pull requests to the CSMM repository.
 2. A comment period of at least 14 days is observed for MAJOR and MINOR changes.
 3. Maintainers review and merge approved proposals.
-4. All accepted changes are recorded in a `CHANGELOG.md`.
+4. All accepted changes are recorded in the release notes for that version.
 
 Changes to scoring weights (level weights, pillar weights, severity weights) and to the level gating threshold require a MAJOR version bump and a minimum 30-day comment period.
 

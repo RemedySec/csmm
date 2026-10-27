@@ -1,43 +1,41 @@
 id: "csmm-iam-022"
-name: "Cross-Account IAM Trust Controls"
+name: "Periodic Least Privilege Access Review"
 level: 3
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All cross-account IAM role trust policies must include explicit conditions to
-  prevent confused deputy attacks — at minimum aws:SourceArn, aws:SourceAccount,
-  or aws:PrincipalOrgID conditions. Trust policies must not use wildcard (*)
-  principals or allow assumption from accounts outside the AWS Organization.
-  An SCP must deny iam:CreateRole and iam:UpdateAssumeRolePolicy unless the
-  trust policy includes an approved condition key.
+  IAM Access Analyzer unused access findings older than 90 days must be auto-escalated
+  via Security Hub to a ticket system with an assigned owner. Findings unresolved after
+  14 additional days trigger automatic policy scoping using Access Analyzer policy
+  generation to produce right-sized replacement policies. No IAM policy may grant
+  Action: '*' on Resource: '*' outside of roles tagged RoleType=BreakGlass.
 
 risk: >
-  Overly permissive trust policies allow any principal in the trusted account —
-  not just the intended service or role — to assume the cross-account role. This
-  creates confused deputy vulnerabilities where a compromised or multi-tenant
-  service in the trusted account can escalate access into your account. Without
-  aws:PrincipalOrgID conditions, roles can also be assumed by accounts that have
-  left or were never part of your organization.
+  Permissions accumulate over time as teams request access for projects, migrations,
+  and incidents but rarely relinquish them afterward. This privilege creep creates
+  an ever-expanding blast radius — a compromised role with months of accumulated
+  unused permissions grants attackers far broader access than the role's current
+  function requires.
 
 verification:
-  - "List all IAM roles with cross-account trust policies: aws iam list-roles and filter for trust policies referencing external account IDs"
-  - "For each cross-account role, confirm the trust policy includes aws:SourceArn, aws:SourceAccount, or aws:PrincipalOrgID conditions"
-  - "Verify no trust policy uses Principal: '*' or Principal: {AWS: '*'}"
-  - "Confirm IAM Access Analyzer findings for external access have been reviewed and resolved"
-  - "Validate SCP exists that restricts trust policy creation to approved patterns"
+  - "Count Access Analyzer unused access findings older than 90 days: aws accessanalyzer list-findings — result must be zero or all must have linked tickets."
+  - "List all IAM policies: aws iam list-policies --scope Local and inspect each policy document. Zero policies may contain Action: '*' with Resource: '*' unless attached to a role tagged RoleType=BreakGlass."
+  - "Verify EventBridge rule exists that routes Access Analyzer findings to a ticket system (Jira, ServiceNow, or equivalent)."
+  - "Confirm at least one policy was auto-scoped in the last 90 days by checking Access Analyzer policy generation history."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-6(3)"
+    control: "AC-6(7)"
+  - framework: "ISO 27001"
+    control: "A.9.2.5"
   - framework: "AWS Well-Architected"
     control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html"
-  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"

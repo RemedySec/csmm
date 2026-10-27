@@ -1,38 +1,40 @@
 id: "csmm-iam-028"
-name: "Policy Drift Auto-Reverted"
+name: "Auto-Remediation for L1 Controls"
 level: 5
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Any unauthorized change to a managed IAM policy, SCP, or permission boundary
-  must be automatically detected and reverted to the last known-good IaC-managed
-  state. Detection must occur via CloudTrail event monitoring using EventBridge
-  rules watching for iam:PutRolePolicy, iam:AttachRolePolicy, iam:CreatePolicyVersion,
-  and related events. The revert action must execute within 5 minutes of the
-  detected change and the triggering principal must be immediately notified.
+  All Level 1 (Exposed) control violations must trigger automated remediation
+  within a maximum response window of 15 minutes, measured as the time between AWS
+  Config recording a non-compliant evaluation and the subsequent compliant
+  re-evaluation, for critical findings.
+  Remediation actions must be implemented via AWS Config Remediation, Security Hub
+  custom actions, or Lambda-backed EventBridge rules, and every automated action
+  must be logged with before-and-after state to a tamper-evident audit log for
+  change management traceability.
 
 risk: >
-  Unauthorized IAM policy modifications — whether from a compromised credential,
-  a developer making a quick console fix, or a malicious insider — persist silently
-  until the next scheduled audit. Even brief windows of elevated permissions can
-  be exploited to create backdoor access, exfiltrate data, or establish persistence
-  that survives the policy revert itself if not paired with a session revocation step.
+  Manual remediation of critical misconfigurations such as publicly exposed S3
+  buckets or open security groups is too slow; the average time-to-detect and
+  time-to-remediate through human processes routinely exceeds hours or days, during
+  which production data is exposed. Automated remediation closes the window of
+  exposure before threat actors can discover and exploit the misconfiguration.
 
 verification:
-  - "Confirm EventBridge rules exist matching iam:PutRolePolicy, iam:AttachRolePolicy, and iam:CreatePolicyVersion events for production roles"
-  - "Trigger a test unauthorized policy change and confirm the revert Lambda executes and restores the prior policy version within 5 minutes"
-  - "Revert Lambda must write before/after policy JSON to an S3 bucket with Object Lock. Verify: aws s3 ls s3://{audit-bucket}/iam-drift/ shows entries. Each entry must contain timestamp, principal ARN, before-policy hash, and after-policy hash."
-  - "Verify that on each revert event, a sts:RevokeSession or iam:PutRolePolicy call appears in CloudTrail within 5 minutes, confirming the triggering principal's sessions were invalidated."
+  - "List all AWS Config remediation configurations and confirm L1 control rules have automated remediation attached"
+  - "Trigger a test L1 violation (e.g., enable public access on a test S3 bucket) and confirm auto-remediation fires within the SLA window"
+  - "Review CloudTrail for the remediation Lambda or SSM automation execution and confirm state changes are logged"
+  - "Verify SNS topic for auto-remediation notifications exists and has zero failed deliveries: check CloudWatch metric NumberOfNotificationsFailed for the topic. All remediation actions must appear in CloudTrail with invokedBy showing config.amazonaws.com or lambda.amazonaws.com."
 
 compliance:
   - framework: "SOC2"
-    control: "CC7.1"
+    control: "CC7.3"
   - framework: "NIST 800-53"
-    control: "CM-3"
+    control: "IR-4"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_modify.html"
-  - "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cloudtrail.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_control-access_disable-perms.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/remediation.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-custom-actions.html"
+  - "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-cases.html"

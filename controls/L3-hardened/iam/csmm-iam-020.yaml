@@ -1,41 +1,37 @@
 id: "csmm-iam-020"
-name: "Enforce ABAC/RBAC Access Patterns"
+name: "Deny IAM Admin Actions via Boundary"
 level: 3
 pillar: "iam"
-priority: "medium"
-severity_weight: 2
+priority: "critical"
+severity_weight: 4
 
 description: >
-  Zero inline policies may be attached to IAM users — all access must be granted via
-  managed policies attached to IAM roles or groups. All managed policies must include
-  at least one tag-based condition key (aws:PrincipalTag, aws:ResourceTag, or
-  aws:RequestTag) OR be attached to a role following the naming pattern
-  {team}-{function}-role. All resources must carry mandatory tags: Team, Environment,
-  and Service.
+  Permission boundary policies must explicitly deny IAM administrative actions
+  including iam:CreatePolicy, iam:AttachRolePolicy, iam:PutRolePolicy, iam:PassRole
+  with wildcard resources, and iam:CreatePolicyVersion. These denies must be present
+  even on roles that appear trusted, since boundaries are the last line of defense
+  against privilege escalation.
 
 risk: >
-  Without structured ABAC or RBAC patterns, access control devolves into per-user
-  or per-resource inline policies that are impossible to audit at scale. Teams
-  create one-off policies for each request, leading to thousands of unique policy
-  documents with inconsistent scoping. This makes it infeasible to answer basic
-  questions like "who can access production data?" and creates gaps that only
-  surface during incidents.
+  Even roles considered trusted by developers or operators should not have unconstrained
+  IAM modification capabilities; compromised credentials, supply-chain attacks, or
+  insider threats can abuse IAM admin actions to silently elevate privileges. Without
+  an explicit boundary-level deny, a single compromised role can create persistent
+  backdoor access that survives incident response.
 
 verification:
-  - "Run: aws iam list-users, then for each user run aws iam list-user-policies. Result must be empty for all users (zero inline policies)."
-  - "Run: aws iam list-attached-user-policies for all users. Result must be empty (all policies attached via roles or groups, not users)."
-  - "For all locally managed policies, retrieve the policy document and confirm it contains at least one Condition key from: aws:PrincipalTag, aws:ResourceTag, aws:RequestTag. Policies without conditions must be attached only to roles matching the naming pattern {team}-{function}-role."
-  - "Verify Tag Policy enforces mandatory tags Team, Environment, Service via: aws organizations describe-policy for all tag policies."
+  - "Retrieve all permission boundary policies: aws iam list-policies --scope Local"
+  - "For each boundary policy, check the policy document denies iam:Create*, iam:Attach*, iam:Put*, iam:PassRole on resource '*'"
+  - "Confirm no boundary policy contains an Allow on iam:* that would override the deny"
+  - "Validate that SCPs at the organization level reinforce these denies as a secondary control"
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.3"
+    control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "AC-3"
-  - framework: "AWS Well-Architected"
-    control: "SEC 03 — How do you manage permissions for people and machines?"
+    control: "AC-6(2)"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_attribute-based-access-control.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_attribute-based-access-control.html"
-  - "https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"

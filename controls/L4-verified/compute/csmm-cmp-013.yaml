@@ -1,0 +1,43 @@
+id: "csmm-cmp-013"
+name: "Hardened Image Pipeline (Golden AMIs)"
+level: 4
+pillar: "compute"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All EC2 instances and container workloads must boot from hardened, approved
+  base images built by a centralized pipeline. EC2 Golden AMIs must be built
+  using EC2 Image Builder with CIS benchmark hardening applied, vulnerability
+  scanning via Inspector, and automatic publishing to a shared AMI account.
+  Only AMIs from the approved account may be launched — enforced via SCP
+  denying ec2:RunInstances with non-approved AMI owners. Container base images
+  must follow the same pipeline: build, scan, sign, publish to internal ECR.
+  Stale images (>90 days without rebuild) must be flagged and deprecated.
+
+risk: >
+  Without a hardened image pipeline, teams build from arbitrary public AMIs or
+  Docker images with unknown provenance, inconsistent hardening, and unpatched
+  vulnerabilities. Each team reinvents security configuration, leading to
+  inconsistent baselines across the fleet. A compromised public AMI or Docker
+  image becomes a supply chain attack affecting every instance launched from it.
+
+verification:
+  - "Confirm EC2 Image Builder pipelines exist for all supported OS types with CIS hardening components"
+  - "Verify SCP denies ec2:RunInstances for AMIs not owned by the approved AMI account"
+  - "Confirm Inspector scanning is integrated into the image build pipeline and blocks images with critical findings"
+  - "Verify no production instances are running AMIs older than 90 days"
+  - "Confirm container base images are sourced exclusively from the internal ECR registry"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.8"
+  - framework: "NIST 800-53"
+    control: "CM-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your compute resources?"
+
+references:
+  - "https://docs.aws.amazon.com/imagebuilder/latest/userguide/what-is-image-builder.html"
+  - "https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html"
+  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/ec2-image-builder-golden-amis/welcome.html"

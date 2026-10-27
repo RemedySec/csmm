@@ -1,47 +1,46 @@
 id: "csmm-cmp-002"
-name: "No Public IPs on EC2 Unless Explicitly Required"
+name: "Block Public AMI Sharing"
 level: 1
 pillar: "compute"
 priority: "high"
 severity_weight: 3
 
 description: >
-  EC2 instances must not be assigned public IPv4 addresses unless explicitly required.
-  Instances with public IPs must be tagged PublicIPException=approved with ExceptionOwner
-  and ExceptionExpiry tags. Subnets or instances with public IPs and expired or missing
-  exception tags fail. Maximum 5% of the EC2 fleet may have public IPs. All internet-facing
-  workloads must be fronted by an ALB, NLB, CloudFront, or API Gateway; the underlying EC2
-  instances must sit in private subnets. Enforce at the subnet level by setting
-  MapPublicIpOnLaunch to false (see csmm-net-004) and by explicitly setting
-  AssociatePublicIpAddress: false in all EC2 launch templates, Auto Scaling Groups, and
-  CloudFormation/Terraform resource definitions.
+  All custom AMIs (Amazon Machine Images) must have their launch permissions set to private.
+  No AMI in any account may be set to public (LaunchPermission: Group: all). Enforce this
+  via an SCP that denies ec2:ModifyImageAttribute when the request would grant group
+  'all' launch permission. Periodically audit AMI visibility using the AWS Config rule
+  'no-unrestricted-route-to-igw' and a custom Lambda or AWS Config custom rule that queries
+  ec2:describe-images with Executable: all. Revoke any unintended public AMI immediately
+  using aws ec2 modify-image-attribute --image-id <ami-id> --launch-permission
+  '{"Remove":[{"Group":"all"}]}'.
 
 risk: >
-  An EC2 instance with a public IP is directly reachable from the internet on all open ports,
-  even if a load balancer is in front of it. This allows attackers to bypass WAF rules,
-  rate limiting, and DDoS protections applied at the ALB/CloudFront layer by targeting the
-  instance IP directly. Publicly reachable instances also expose all services running on
-  non-standard ports — monitoring agents, debugging endpoints, metadata proxies — that are
-  not intended to be internet-accessible.
+  AMIs built from EC2 instances frequently contain sensitive data baked into the image:
+  application configuration files, database connection strings, hard-coded API keys and
+  secrets, SSH authorized_keys, TLS certificates, and OS-level credentials. A publicly
+  shared AMI exposes this entire contents to any AWS account in any region. Automated
+  scanners continuously enumerate public AMIs in search of credentials. Even a briefly
+  public AMI can be copied by a threat actor before it is made private.
 
 verification:
-  - "Run: aws ec2 describe-instances | jq '[.Reservations[].Instances[] | select(.PublicIpAddress != null)] | length' — document and justify all non-zero results."
-  - "For any instance with a public IP, verify it is tagged PublicIPException=approved with valid ExceptionOwner and ExceptionExpiry tags. Instances with expired or missing exception tags fail."
-  - "Confirm that instances with public IPs represent no more than 5% of the total EC2 fleet."
-  - "Confirm all EC2 launch templates have NetworkInterfaces[].AssociatePublicIpAddress set to false."
-  - "Verify that security groups attached to instances with public IPs do not allow unrestricted inbound access on application ports — traffic must originate only from the load balancer security group."
-  - "Confirm VPC Flow Logs are enabled for the VPC containing any instance with a public IP to provide traffic visibility."
+  - "Run: aws ec2 describe-images --owners self --executable-users all | jq '.Images | length' — expected 0."
+  - "Run this check across all active regions using: aws ec2 describe-regions | jq -r '.Regions[].RegionName' | xargs -I{} aws ec2 describe-images --region {} --owners self --executable-users all."
+  - "Verify an SCP or IAM permission boundary blocks ec2:ModifyImageAttribute calls that include Group: all in the launch permission."
+  - "Confirm an automated weekly scan (Lambda or Security Hub custom insight) alerts on any AMI with public launch permissions."
+  - "Validate that the AMI build pipeline (Packer, EC2 Image Builder) does not include a step that sets launch permissions to public."
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.6"
+    control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "SC-7"
+    control: "SC-28"
   - framework: "AWS Well-Architected"
-    control: "SEC 05 — How do you protect your network resources?"
+    control: "SEC 07 — How do you classify your data?"
 
 references:
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-9"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-explicit.html#sharingamis-removing"
+  - "https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-image-attribute.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-25"
+  - "https://docs.aws.amazon.com/imagebuilder/latest/userguide/security-best-practices.html"

@@ -1,47 +1,47 @@
 id: "csmm-net-007"
-name: "TLS 1.2 Minimum Everywhere"
+name: "Default VPC Not in Use or Deleted in All Regions"
 level: 1
 pillar: "networking"
-priority: "medium"
-severity_weight: 2
+priority: "high"
+severity_weight: 3
 
 description: >
-  All TLS-terminating AWS services must be configured to reject TLS 1.0 and TLS 1.1
-  connections, accepting only TLS 1.2 and above. This applies to ALB/NLB TLS policies
-  (minimum ELBSecurityPolicy-TLS13-1-2-2021-06), CloudFront (minimum TLSv1.2_2021),
-  API Gateway (minimum TLS 1.2), RDS (minimum ssl-tls-minimum-version parameter set to
-  TLSv1.2), and any self-managed TLS endpoints on EC2. Use AWS Config rules
-  'alb-desync-mode-check' (for ALB policy) and 'cloudfront-security-policy-check' to
-  detect non-compliant configurations.
+  The AWS default VPC exists in every region by default and comes pre-configured
+  with an internet gateway, public subnets in every availability zone, and a default
+  security group that allows all outbound traffic. No production or sensitive workloads
+  may run in the default VPC. The preferred state is deletion of the default VPC in
+  every region; where deletion is not operationally feasible, the default VPC must
+  have no running instances, no attached internet gateway in active use, and the
+  default security group must restrict all traffic.
 
 risk: >
-  TLS 1.0 and 1.1 are formally deprecated and contain cryptographic weaknesses exploitable
-  by attacks including BEAST (CBC mode in TLS 1.0), POODLE (SSLv3/TLS 1.0 fallback), and
-  SWEET32 (birthday attacks on 64-bit block ciphers). PCI-DSS v3.2+ required migration away
-  from TLS 1.0 as of June 2018. Clients negotiating a downgraded TLS version are vulnerable
-  to session decryption and active MITM attacks on intercepted traffic, undermining the
-  confidentiality of all data transmitted over the connection.
+  Resources inadvertently launched into the default VPC inherit its permissive
+  defaults — public subnets with auto-assigned public IPs, a wide-open default
+  security group, and a pre-attached internet gateway. Developers and automated
+  tools frequently use the default VPC as a convenience during testing and
+  prototyping, and those workloads sometimes persist into production without the
+  deliberate network architecture that a purpose-built VPC provides. The default
+  VPC's configuration is also frequently overlooked in security reviews because
+  teams focus on their named VPCs.
 
 verification:
-  - "For each ALB, run: aws elbv2 describe-listeners and verify SslPolicy is set to ELBSecurityPolicy-TLS13-1-2-2021-06 or ELBSecurityPolicy-FS-1-2-Res-2020-10 — no policy containing 'TLS-1-0' or 'TLS-1-1' is permitted."
-  - "For CloudFront, verify MinimumProtocolVersion is TLSv1.2_2021 for all distributions (see csmm-net-006 for per-distribution check)."
-  - "For API Gateway, run: aws apigateway get-domain-names and verify securityPolicy is TLS_1_2 for all custom domains."
-  - "Use an SSL Labs scan or testssl.sh against all public endpoints and confirm TLS 1.0 and TLS 1.1 return 'Connection refused' or are absent from the protocol list."
-  - "For RDS, query the ssl-tls-minimum-version parameter group parameter and verify it is set to TLSv1.2."
+  - "For each region: aws ec2 describe-vpcs --filters Name=isDefault,Values=true | jq '.Vpcs[].VpcId' — if no output, default VPC is deleted (pass)."
+  - "If default VPC exists: aws ec2 describe-instances --filters Name=vpc-id,Values=<default-vpc-id> | jq '.Reservations[].Instances[].InstanceId' — expect empty."
+  - "Confirm default security group in default VPC has no inbound rules: aws ec2 describe-security-groups --filters Name=vpc-id,Values=<id> Name=group-name,Values=default | jq '.SecurityGroups[].IpPermissions' — expect empty array."
+  - "AWS Config rule: vpc-default-security-group-closed — deploy in all regions."
 
 compliance:
+  - framework: "CIS AWS Foundations"
+    control: "5.4"
+    version: "3.0"
   - framework: "SOC2"
-    control: "CC6.7"
+    control: "CC6.6"
   - framework: "NIST 800-53"
-    control: "SC-8(1)"
-  - framework: "PCI-DSS"
-    control: "4.2.1"
+    control: "SC-7"
   - framework: "AWS Well-Architected"
-    control: "SEC 08 — How do you protect your data in transit?"
+    control: "SEC 06 — How do you protect your network resources?"
 
 references:
-  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/describe-ssl-policies.html"
-  - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html"
-  - "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-custom-domain-tls-version.html"
-  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-14"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html"

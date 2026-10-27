@@ -1,0 +1,52 @@
+id: "csmm-dat-017"
+name: "KMS Key Policies — No Overly Permissive Access"
+level: 3
+pillar: "data"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Every KMS Customer Managed Key (CMK) must have a key policy that follows
+  least privilege: the key policy must not grant kms:* to any principal other
+  than a designated key administrator role, must not allow the root account
+  principal alone as the sole grantee (which delegates full control to IAM
+  policies), and must not grant Decrypt or GenerateDataKey to principals
+  broader than the specific services or roles that need them.
+  Key policies must explicitly list key administrators (who can manage the key)
+  separately from key users (who can encrypt/decrypt data), with no overlap.
+  Any key with a policy statement containing Principal: "*" or Action: "kms:*"
+  without a restrictive condition is a critical finding.
+
+risk: >
+  A permissive KMS key policy bypasses all the encryption it protects. If any
+  IAM principal can decrypt using a CMK, encrypting data with that key provides
+  no security guarantee — the encryption is cosmetic. Cross-account key access
+  without scoping via aws:PrincipalOrgID allows any compromised identity in
+  a trusted account to decrypt your data silently. Key policies with
+  Principal: "*" are public — any authenticated AWS identity can call Decrypt.
+  This is the KMS equivalent of a public S3 bucket, but harder to detect because
+  key policies are not surfaced in standard public access checks.
+
+verification:
+  - "For each CMK: aws kms get-key-policy --key-id <id> --policy-name default | jq '.Policy | fromjson' — review all Statement entries."
+  - "Flag any statement with Principal: \"*\" (any authenticated caller can use the key)."
+  - "Flag any statement with Action: \"kms:*\" granted to principals other than the designated key admin role."
+  - "Confirm key admin and key user principals are distinct — no single principal has both kms:PutKeyPolicy (admin) and kms:Decrypt (user) unless explicitly justified."
+  - "Use IAM Access Analyzer to detect cross-account or external key access: enable organization-level analysis and review all KMS external access findings."
+  - "AWS Config rule: kms-key-rotation-enabled — supplement with a custom Config rule or Lambda that checks for overly permissive key policies."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "N/A"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-12"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html"
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html"
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/iam-policies.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-resources.html#access-analyzer-kms"

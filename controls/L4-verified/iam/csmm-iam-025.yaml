@@ -1,46 +1,37 @@
 id: "csmm-iam-025"
-name: "Temporary Elevated Access (JIT/Break-Glass)"
+name: "IAM Access Analyzer Enabled"
 level: 4
 pillar: "iam"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Zero IAM roles or SSO permission sets with AdministratorAccess or Action: '*' /
-  Resource: '*' policies may remain active for more than 4 hours. All administrative
-  access must use SSO permission sets with session duration set to 4 hours maximum,
-  or STS AssumeRole with a DurationSeconds of 14400 or less and an
-  aws:MultiFactorAuthPresent condition in the trust policy. Break-glass roles for
-  emergency access must require MFA, generate high-severity alerts, and have sessions
-  limited to a maximum of 4 hours.
+  AWS IAM Access Analyzer must be enabled in every AWS region where resources are
+  deployed, with an organization-level analyzer configured at the management account
+  to provide cross-account visibility. Access Analyzer must be integrated with
+  Security Hub to centralize findings, and active findings must be reviewed and
+  resolved within defined SLA windows based on finding severity.
 
 risk: >
-  Standing privileged access to production creates a permanent high-value target.
-  If an administrator's credentials are compromised, the attacker immediately
-  inherits full production access without any additional challenge. JIT access
-  ensures that even compromised privileged identities have no standing permissions
-  to exploit — an attacker would need to trigger the approval workflow, which
-  generates visible alerts and requires human approval.
+  Without continuous access analysis, overprivileged policies and externally shared
+  resources such as S3 buckets, KMS keys, IAM roles, and Lambda functions go
+  undetected until a breach occurs. Access Analyzer findings frequently reveal
+  unintended cross-account access granted during infrastructure changes that would
+  otherwise persist indefinitely without automated detection.
 
 verification:
-  - "Run: aws iam list-roles and inspect attached policies. Any role with Action: '*' on Resource: '*' must either (a) have tag RoleType=BreakGlass with aws:MultiFactorAuthPresent in its trust policy, or (b) be an SSO-managed role with MaxSessionDuration <= 14400."
-  - "Verify JIT access requests are logged with requestor, approver, duration, and justification"
-  - "Test that elevated sessions automatically expire after the configured duration (maximum 4 hours)"
-  - "Confirm break-glass role assumption triggers a high-severity alert in the SIEM/PagerDuty"
-  - "Query CloudTrail for sts:AssumeRole events on break-glass roles in the last 30 days. Each event must have a corresponding SNS notification within 5 minutes (verify via SNS delivery logs)."
+  - "Confirm an organization-level analyzer exists: aws accessanalyzer list-analyzers --query 'analyzers[?type==`ORGANIZATION`]'"
+  - "Verify analyzers are enabled in all active regions by iterating across each region"
+  - "Check Security Hub integration is active and Access Analyzer findings appear in the Security Hub console"
+  - "Count Access Analyzer findings with severity HIGH or CRITICAL that are older than 30 days and do not have Security Hub workflow status RESOLVED — count must be zero."
 
 compliance:
   - framework: "SOC2"
     control: "CC6.1"
   - framework: "NIST 800-53"
-    control: "AC-2(2)"
-  - framework: "ISO 27001"
-    control: "A.9.2.3"
-  - framework: "AWS Well-Architected"
-    control: "SEC 03 — How do you manage permissions for people and machines?"
+    control: "AC-6"
 
 references:
-  - "https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html"
-  - "https://aws.amazon.com/blogs/security/managing-temporary-elevated-access-to-your-aws-environment/"
-  - "https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/configure-temporary-elevated-access-to-aws-accounts.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-getting-started.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-providers.html"

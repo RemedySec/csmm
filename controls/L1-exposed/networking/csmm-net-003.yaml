@@ -1,44 +1,42 @@
 id: "csmm-net-003"
-name: "Restrict Default Security Group to No Traffic"
+name: "No Auto-Assign Public IPs in Subnets"
 level: 1
 pillar: "networking"
 priority: "high"
 severity_weight: 3
 
 description: >
-  The default security group in every VPC must have all inbound and outbound rules removed
-  so that it permits no traffic. No EC2 instance, RDS instance, Lambda function, or other
-  resource should use the default security group — all resources must be assigned explicitly
-  created security groups with documented, least-privilege rules. Use the AWS Config rule
-  'vpc-default-security-group-closed' to enforce this requirement across all regions.
+  All VPC subnets must have the MapPublicIpOnLaunch attribute set to false. EC2 instances
+  that require internet access must use NAT Gateways for outbound traffic. Instances that
+  require inbound internet exposure must sit behind an ALB, NLB, or CloudFront distribution —
+  not be directly internet-reachable. Use the AWS Config rule
+  'subnet-auto-assign-public-ip-disabled' to detect non-compliant subnets. Enforce at
+  infrastructure provisioning time via IaC linting (cfn-guard, tfsec) and Terraform policies.
 
 risk: >
-  The AWS default security group allows all inbound and outbound traffic between resources
-  that share the same default security group. This creates an implicit full-mesh trust
-  relationship across all resources in a VPC that were deployed without an explicit security
-  group assignment — a common occurrence in developer accounts or when infrastructure-as-code
-  templates omit security group parameters. Restricting the default security group eliminates
-  this hidden lateral movement path and forces engineers to explicitly define network trust.
+  When MapPublicIpOnLaunch is enabled, every EC2 instance launched into that subnet
+  automatically receives a public IPv4 address, regardless of whether the engineer intended
+  public exposure. This is a common source of accidental internet exposure — a developer
+  launches a test instance into a misconfigured subnet and it becomes immediately reachable
+  from the internet. Public IPs also bypass security group rules that reference private CIDR
+  ranges as the source, making network segmentation analysis more complex.
 
 verification:
-  - "Run: aws ec2 describe-security-groups --filters Name=group-name,Values=default | jq '.SecurityGroups[] | {VpcId: .VpcId, IngressRules: .IpPermissions, EgressRules: .IpPermissionsEgress}' — both IngressRules and EgressRules must be empty arrays for all VPCs."
-  - "Confirm AWS Config rule 'vpc-default-security-group-closed' is ENABLED and reports COMPLIANT across all regions."
-  - "Run: aws ec2 describe-instances | jq '[.Reservations[].Instances[].SecurityGroups[] | select(.GroupName == \"default\")] | length' — expected 0 (no instances using default SG)."
-  - "Verify Terraform/CloudFormation templates enforce explicit security group IDs on all resource definitions and fail linting if 'default' SG is referenced."
+  - "Run: aws ec2 describe-subnets | jq '[.Subnets[] | select(.MapPublicIpOnLaunch == true)] | length' — expected 0 in production environments."
+  - "Confirm AWS Config rule 'subnet-auto-assign-public-ip-disabled' is ENABLED and reports COMPLIANT across all regions."
+  - "For any subnet where public IP assignment is a hard requirement: Subnets with MapPublicIpOnLaunch=true must have tags: PublicIPException=approved, ExceptionOwner={team}, ExceptionExpiry={YYYY-MM-DD}. Subnets with expired or missing exception tags that have MapPublicIpOnLaunch=true fail this control."
+  - "Verify that Terraform modules for VPC provisioning set map_public_ip_on_launch = false by default, and tfsec or Checkov rules flag any override."
 
 compliance:
-  - framework: "CIS AWS Foundations"
-    control: "5.4"
-    version: "3.0"
   - framework: "SOC2"
     control: "CC6.6"
   - framework: "NIST 800-53"
-    control: "SC-7(5)"
+    control: "SC-7"
   - framework: "AWS Well-Architected"
     control: "SEC 05 — How do you protect your network resources?"
 
 references:
-  - "https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html#default-security-group"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-2"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/modify-subnets.html#subnet-public-ip"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-15"

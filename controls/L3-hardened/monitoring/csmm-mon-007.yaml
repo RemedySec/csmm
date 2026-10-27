@@ -1,0 +1,49 @@
+id: "csmm-mon-007"
+name: "Extended CloudWatch Alarms for Infrastructure Changes"
+level: 3
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  CloudWatch metric filters and alarms must be configured for four additional
+  infrastructure change event categories beyond the CIS baseline (mon-006):
+  (1) NACL changes — CreateNetworkAcl, CreateNetworkAclEntry, DeleteNetworkAcl,
+      DeleteNetworkAclEntry, ReplaceNetworkAclEntry, ReplaceNetworkAclAssociation
+  (2) Network gateway changes — CreateCustomerGateway, DeleteCustomerGateway,
+      AttachInternetGateway, CreateInternetGateway, DeleteInternetGateway,
+      DetachInternetGateway
+  (3) Route table changes — CreateRoute, CreateRouteTable, ReplaceRoute,
+      ReplaceRouteTableAssociation, DeleteRouteTable, DeleteRoute,
+      DisassociateRouteTable
+  (4) AWS Config configuration changes — StopConfigurationRecorder,
+      DeleteDeliveryChannel, PutDeliveryChannel, PutConfigurationRecorder
+  Each alarm requires a metric filter on the CloudTrail log group, threshold
+  >= 1, and an SNS action with a confirmed subscription.
+
+risk: >
+  Changes to NACLs, gateways, and route tables directly alter the network
+  security posture and connectivity of the environment — an attacker who gains
+  sufficient IAM permissions may open network paths or disable controls without
+  triggering the CIS baseline alarms. Disabling AWS Config removes the
+  compliance baseline entirely. These events are less frequent than the CIS
+  baseline events, making any alarm trigger a high-signal indicator of
+  unauthorized activity or misconfiguration.
+
+verification:
+  - "For each of the four event categories: aws logs describe-metric-filters --log-group-name <cloudtrail-log-group> and confirm a filter matching the relevant API calls exists."
+  - "For each alarm: aws cloudwatch describe-alarms — confirm Threshold=1, ComparisonOperator=GreaterThanOrEqualToThreshold, AlarmActions contains SNS ARN."
+  - "AWS Security Hub CIS v3.0 controls 4.12–4.15 map to these alarms — confirm all four are passing."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "4.12-4.15"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "SI-4"
+
+references:
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html"
+  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html"

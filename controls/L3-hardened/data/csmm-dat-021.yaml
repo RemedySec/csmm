@@ -1,0 +1,45 @@
+id: "csmm-dat-021"
+name: "Encryption Key Management Architecture"
+level: 3
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  The organization must have a deliberate, documented key management architecture
+  that separates key administrators from key users, assigns CMK ownership per
+  data classification tier, and establishes which services use AWS-managed keys
+  versus customer-managed keys versus keys imported from an HSM. Every sensitive
+  data store (S3 buckets containing PII, RDS instances, EFS file systems, Secrets
+  Manager secrets) must use a CMK with a documented owner, a scoped key policy,
+  and rotation enabled. The architecture must prevent any single IAM principal
+  from both administering a key and using it to decrypt data.
+
+risk: >
+  An unarchitected key management posture — where most services use AWS-managed
+  keys, a few ad-hoc CMKs exist with permissive policies, and no one owns key
+  lifecycle — means encryption is cosmetic. When a data breach occurs, the
+  organization cannot demonstrate that encrypted data was protected because the
+  keys were accessible to overly broad principals. Regulators and auditors
+  increasingly require evidence of deliberate key management, not just the presence
+  of encryption. Without a key architecture, key policies accumulate drift and
+  the blast radius of a single compromised key administrator cannot be bounded.
+
+verification:
+  - "Enumerate all CMKs: aws kms list-keys — count CMKs with KeyManager=CUSTOMER. Verify each has a documented owner and purpose tag (e.g. Purpose=rds-prod-encryption, Owner=platform-team)."
+  - "For each sensitive data store, confirm it uses a CMK (not aws/s3, aws/rds, aws/secretsmanager): aws s3api get-bucket-encryption, aws rds describe-db-instances --query 'DBInstances[].KmsKeyId', aws secretsmanager list-secrets --query 'SecretList[].KmsKeyId'."
+  - "Verify key admin and key user separation: no principal appears in both the key admin statement (kms:PutKeyPolicy, kms:ScheduleKeyDeletion) and the key user statement (kms:Decrypt, kms:GenerateDataKey) of any CMK policy."
+  - "Confirm no AWS-managed key is used for data classified as sensitive or above in your classification scheme."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-12"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html"
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html"
+  - "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html"

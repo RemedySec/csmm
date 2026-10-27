@@ -1,30 +1,30 @@
 id: "csmm-net-011"
-name: "NACL No Unrestricted Ingress"
+name: "NACL No Unrestricted Egress"
 level: 2
 pillar: "networking"
-priority: "high"
-severity_weight: 3
+priority: "medium"
+severity_weight: 2
 
 description: >
-  Network ACL inbound rules must not permit unrestricted ingress from all
-  sources (0.0.0.0/0 or ::/0) on all ports. Inbound rules must specify the
-  minimum necessary source CIDR ranges and port numbers for each subnet's
-  workload purpose. Public subnets may allow inbound 80/443 from any source,
-  but must explicitly deny all other ports from 0.0.0.0/0.
+  Network ACL outbound rules must not permit unrestricted egress to all
+  destinations (0.0.0.0/0 or ::/0) on all ports (0-65535). Outbound traffic
+  should be restricted to explicitly approved destination CIDR ranges. No outbound rule may use 0.0.0.0/0 combined with port range 0-65535. Individual rule port range width must not exceed 10 ports, except port 443 which may be open to 0.0.0.0/0 for HTTPS egress. A default DENY rule at the end of the
+  rule set to block all other outbound traffic.
 
 risk: >
-  Unrestricted inbound access exposes every port on every instance in the
-  subnet directly to the public internet, regardless of security group
-  configuration on individual instances. A single security group misconfiguration
-  or an instance launched without the correct security group becomes immediately
-  and fully internet-accessible, providing attackers a direct path to exploit
-  any service, vulnerability, or default credential present on the instance.
+  Unrestricted outbound network access enables data exfiltration via any
+  protocol and any destination, which is a primary technique used by attackers
+  and malicious insiders after gaining access to a resource. It also allows
+  compromised instances to participate in outbound attack campaigns or
+  communicate with command-and-control infrastructure without triggering
+  port-specific network controls, making containment significantly harder.
 
 verification:
-  - "Run aws ec2 describe-network-acls across all regions and flag ALLOW rules where CidrBlock is 0.0.0.0/0 or Ipv6CidrBlock is ::/0 and PortRange covers more than the approved public ports (80, 443)."
-  - "Confirm private and database subnet NACLs have no inbound rules permitting traffic from 0.0.0.0/0 on any port."
-  - "Validate that ephemeral port ranges (1024-65535) are allowed from appropriate sources (load balancer subnets) rather than from 0.0.0.0/0."
-  - "Deploy the AWS Config rule restricted-common-ports and verify it is compliant across all accounts and regions."
+  - "Inspect all NACL outbound rules via aws ec2 describe-network-acls and flag any ALLOW rule with destination 0.0.0.0/0 or ::/0 covering port range 0-65535."
+  - "Confirm each NACL has a final DENY ALL rule (rule number 32767 or equivalent) and that ALLOW rules specify narrow port ranges."
+  - "Cross-reference with VPC Flow Logs to identify any unexpected outbound traffic patterns that suggest overly permissive rules in practice."
+  - "Review NACLs for all subnets, including private subnets, as egress restrictions are equally important for internal workloads."
+  - "For each NACL, verify no outbound rule combines destination 0.0.0.0/0 with port range wider than 10 ports (exception: port 443)."
 
 compliance:
   - framework: "SOC2"
@@ -34,5 +34,5 @@ compliance:
 
 references:
   - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html"
-  - "https://docs.aws.amazon.com/config/latest/developerguide/restricted-common-ports.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html#VPC_Security_Comparison"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-recommended-nacl-rules.html"

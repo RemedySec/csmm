@@ -1,43 +1,47 @@
 id: "csmm-net-006"
-name: "CloudFront Enforce HTTPS"
+name: "TLS 1.2 Minimum Everywhere"
 level: 1
 pillar: "networking"
-priority: "high"
-severity_weight: 3
+priority: "medium"
+severity_weight: 2
 
 description: >
-  All CloudFront distributions must be configured with a viewer protocol policy of
-  'redirect-to-https' or 'https-only' for all cache behaviors. The distribution must use
-  a custom SSL/TLS certificate (ACM) rather than the CloudFront default certificate when
-  serving traffic on a custom domain. The minimum protocol version for viewer connections
-  must be TLSv1.2_2021 or newer. Enforce using the AWS Config rule
-  'cloudfront-viewer-policy-https'.
+  All TLS-terminating AWS services must be configured to reject TLS 1.0 and TLS 1.1
+  connections, accepting only TLS 1.2 and above. This applies to ALB/NLB TLS policies
+  (minimum ELBSecurityPolicy-TLS13-1-2-2021-06), CloudFront (minimum TLSv1.2_2021),
+  API Gateway (minimum TLS 1.2), RDS (minimum ssl-tls-minimum-version parameter set to
+  TLSv1.2), and any self-managed TLS endpoints on EC2. Use AWS Config rules
+  'alb-desync-mode-check' (for ALB policy) and 'cloudfront-security-policy-check' to
+  detect non-compliant configurations.
 
 risk: >
-  CloudFront distributions that allow HTTP viewer connections permit man-in-the-middle
-  (MITM) attacks where an attacker on the client's network intercepts and modifies traffic
-  before it reaches the CloudFront edge. This is especially critical for CloudFront
-  distributions serving web applications with login forms, API endpoints, or authenticated
-  content, as credentials and session tokens can be captured in transit. HTTP also enables
-  SSL stripping attacks that silently downgrade HTTPS sessions to HTTP without user awareness.
+  TLS 1.0 and 1.1 are formally deprecated and contain cryptographic weaknesses exploitable
+  by attacks including BEAST (CBC mode in TLS 1.0), POODLE (SSLv3/TLS 1.0 fallback), and
+  SWEET32 (birthday attacks on 64-bit block ciphers). PCI-DSS v3.2+ required migration away
+  from TLS 1.0 as of June 2018. Clients negotiating a downgraded TLS version are vulnerable
+  to session decryption and active MITM attacks on intercepted traffic, undermining the
+  confidentiality of all data transmitted over the connection.
 
 verification:
-  - "Run: aws cloudfront list-distributions | jq '.DistributionList.Items[] | {Id: .Id, Behaviors: [.DefaultCacheBehavior.ViewerProtocolPolicy, .CacheBehaviors.Items[].ViewerProtocolPolicy]}' — all values must be 'redirect-to-https' or 'https-only', never 'allow-all'."
-  - "Confirm AWS Config rule 'cloudfront-viewer-policy-https' is ENABLED and reports COMPLIANT."
-  - "For each distribution, verify MinimumProtocolVersion is TLSv1.2_2021 under the viewer certificate configuration."
-  - "Use curl -v http://<cloudfront-domain> and confirm a 301 or 302 redirect to https:// is returned."
-  - "Verify ACM certificates for custom domains are in us-east-1 (required for CloudFront) and are not expired."
+  - "For each ALB, run: aws elbv2 describe-listeners and verify SslPolicy is set to ELBSecurityPolicy-TLS13-1-2-2021-06 or ELBSecurityPolicy-FS-1-2-Res-2020-10 — no policy containing 'TLS-1-0' or 'TLS-1-1' is permitted."
+  - "For CloudFront, verify MinimumProtocolVersion is TLSv1.2_2021 for all distributions (see csmm-net-006 for per-distribution check)."
+  - "For API Gateway, run: aws apigateway get-domain-names and verify securityPolicy is TLS_1_2 for all custom domains."
+  - "Use an SSL Labs scan or testssl.sh against all public endpoints and confirm TLS 1.0 and TLS 1.1 return 'Connection refused' or are absent from the protocol list."
+  - "For RDS, query the ssl-tls-minimum-version parameter group parameter and verify it is set to TLSv1.2."
 
 compliance:
   - framework: "SOC2"
     control: "CC6.7"
   - framework: "NIST 800-53"
-    control: "SC-8"
+    control: "SC-8(1)"
+  - framework: "PCI-DSS"
+    control: "4.2.1"
   - framework: "AWS Well-Architected"
     control: "SEC 08 — How do you protect your data in transit?"
 
 references:
-  - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html"
+  - "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/describe-ssl-policies.html"
   - "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html"
-  - "https://docs.aws.amazon.com/config/latest/developerguide/cloudfront-viewer-policy-https.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-3"
+  - "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-custom-domain-tls-version.html"
+  - "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-14"

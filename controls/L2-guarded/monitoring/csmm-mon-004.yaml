@@ -1,41 +1,43 @@
 id: "csmm-mon-004"
-name: "CloudWatch Alarm for IAM Policy Changes"
+name: "CloudTrail Log File Validation"
 level: 2
 pillar: "monitoring"
 priority: "high"
 severity_weight: 3
 
 description: >
-  A CloudWatch metric filter and alarm must detect changes to IAM policies,
-  including CreatePolicy, DeletePolicy, CreatePolicyVersion, DeletePolicyVersion,
-  SetDefaultPolicyVersion, AttachUserPolicy, DetachUserPolicy, AttachRolePolicy,
-  DetachRolePolicy, AttachGroupPolicy, and DetachGroupPolicy events. All policy
-  modifications must trigger SNS notification.
+  CloudTrail log file validation must be enabled on all trails by setting
+  EnableLogFileValidation to true. This causes CloudTrail to create a SHA-256
+  digest file for each log delivery and sign it with a private key, enabling
+  detection of any log file modification, deletion, or insertion after delivery
+  to S3. Digest files must be stored and verified as part of routine compliance
+  and incident response procedures.
 
 risk: >
-  Unauthorized IAM policy changes can grant attackers persistent access or
-  escalate privileges in ways that survive credential rotation. Without real-time
-  alerting, policy backdoors can be introduced during a breach and remain active
-  long after the initial intrusion vector is closed, enabling continued access.
+  An attacker with write access to the CloudTrail S3 bucket can modify or
+  delete log files to cover their tracks or to undermine forensic investigations.
+  Without log file validation, there is no cryptographic mechanism to distinguish
+  authentic log records from tampered ones, meaning that all audit evidence
+  produced by CloudTrail becomes legally and forensically suspect. This
+  undermines the evidentiary value of logs for regulatory compliance, litigation,
+  and internal investigations.
 
 verification:
-  - "Verify the metric filter covers all relevant IAM policy actions: aws logs describe-metric-filters and inspect the filter pattern for CreatePolicy, DeletePolicy, AttachUserPolicy, DetachRolePolicy variants"
-  - "Confirm the alarm threshold is set to >= 1 with a period of 300 seconds or less"
-  - "Verify SNS action is attached and the topic subscription is confirmed"
-  - "Cross-check against AWS Config rule iam-policy-no-statements-with-admin-access for complementary coverage"
-  - "Review recent IAM policy changes: aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreatePolicy"
+  - "Run aws cloudtrail describe-trails and confirm LogFileValidationEnabled is true for all trails."
+  - "Deploy AWS Config rule cloud-trail-log-file-validation-enabled and verify compliance across all accounts."
+  - "Confirm digest files are present in the S3 bucket under the CloudTrail/digest/ prefix alongside log deliveries."
+  - "Periodically run aws cloudtrail validate-logs --trail-arn <arn> --start-time <time> to verify digest chain integrity as part of compliance checks."
 
 compliance:
   - framework: "CIS AWS Foundations"
-    control: "4.4"
+    control: "3.2"
     version: "3.0"
   - framework: "SOC2"
     control: "CC7.2"
   - framework: "NIST 800-53"
-    control: "AC-2(4)"
+    control: "AU-9"
 
 references:
-  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
-  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
-  - "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-4"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html"
+  - "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-cli.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/cloud-trail-log-file-validation-enabled.html"

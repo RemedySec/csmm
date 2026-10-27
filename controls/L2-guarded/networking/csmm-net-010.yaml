@@ -1,30 +1,31 @@
 id: "csmm-net-010"
-name: "NACL No Unrestricted Egress"
+name: "NACL Deny Known Bad Ports"
 level: 2
 pillar: "networking"
-priority: "medium"
-severity_weight: 2
+priority: "high"
+severity_weight: 3
 
 description: >
-  Network ACL outbound rules must not permit unrestricted egress to all
-  destinations (0.0.0.0/0 or ::/0) on all ports (0-65535). Outbound traffic
-  should be restricted to explicitly approved destination CIDR ranges. No outbound rule may use 0.0.0.0/0 combined with port range 0-65535. Individual rule port range width must not exceed 10 ports, except port 443 which may be open to 0.0.0.0/0 for HTTPS egress. A default DENY rule at the end of the
-  rule set to block all other outbound traffic.
+  Network ACLs must include explicit DENY rules for inbound and outbound
+  traffic on ports associated with inherently insecure or legacy protocols,
+  including Telnet (23), FTP control (21) and data (20), RSH/RExec (514/512),
+  TFTP (69), SNMP (161/162), and SMB (445/139). These rules must be placed
+  with rule numbers lower than any permissive ALLOW rules to ensure they
+  take precedence.
 
 risk: >
-  Unrestricted outbound network access enables data exfiltration via any
-  protocol and any destination, which is a primary technique used by attackers
-  and malicious insiders after gaining access to a resource. It also allows
-  compromised instances to participate in outbound attack campaigns or
-  communicate with command-and-control infrastructure without triggering
-  port-specific network controls, making containment significantly harder.
+  Ports associated with legacy protocols are actively and continuously scanned
+  by automated threat actors across the internet. Services accidentally exposed
+  on these ports — whether misconfigured applications or default AWS service
+  behaviors — can be exploited without authentication or via well-known
+  vulnerabilities. NACL-level blocking provides a defense-in-depth layer that
+  operates independently of security group configuration errors.
 
 verification:
-  - "Inspect all NACL outbound rules via aws ec2 describe-network-acls and flag any ALLOW rule with destination 0.0.0.0/0 or ::/0 covering port range 0-65535."
-  - "Confirm each NACL has a final DENY ALL rule (rule number 32767 or equivalent) and that ALLOW rules specify narrow port ranges."
-  - "Cross-reference with VPC Flow Logs to identify any unexpected outbound traffic patterns that suggest overly permissive rules in practice."
-  - "Review NACLs for all subnets, including private subnets, as egress restrictions are equally important for internal workloads."
-  - "For each NACL, verify no outbound rule combines destination 0.0.0.0/0 with port range wider than 10 ports (exception: port 443)."
+  - "For each VPC subnet, run aws ec2 describe-network-acls and inspect inbound and outbound rules for explicit DENY entries on ports 20, 21, 23, 69, 139, 161, 162, 445, 512, 514."
+  - "Confirm the DENY rules have lower rule numbers than any ALLOW rules covering the same port range."
+  - "Use AWS Config or a custom Lambda to enumerate all NACLs across all regions and flag any missing port denials."
+  - "Validate that the rules apply to both TCP and UDP where applicable (e.g., SNMP uses UDP 161/162, TFTP uses UDP 69)."
 
 compliance:
   - framework: "SOC2"
@@ -34,5 +35,5 @@ compliance:
 
 references:
   - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html#VPC_Security_Comparison"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html"
   - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-recommended-nacl-rules.html"

@@ -1,45 +1,47 @@
 id: "csmm-cmp-001"
-name: "EBS Encryption at Rest"
+name: "No Public IPs on EC2 Unless Explicitly Required"
 level: 1
 pillar: "compute"
 priority: "high"
 severity_weight: 3
 
 description: >
-  All EBS volumes attached to EC2 instances must be encrypted at rest, including root volumes,
-  data volumes, and any volumes created from unencrypted snapshots (which must be re-encrypted
-  during copy). For new deployments, enable EBS default encryption at the account level
-  (see csmm-str-007). For existing unencrypted volumes, create an encrypted snapshot copy and
-  replace the volume. Enforce per-volume compliance via AWS Config rule
-  'encrypted-volumes'. Customer-managed KMS keys are required for regulated workloads.
+  EC2 instances must not be assigned public IPv4 addresses unless explicitly required.
+  Instances with public IPs must be tagged PublicIPException=approved with ExceptionOwner
+  and ExceptionExpiry tags. Subnets or instances with public IPs and expired or missing
+  exception tags fail. Maximum 5% of the EC2 fleet may have public IPs. All internet-facing
+  workloads must be fronted by an ALB, NLB, CloudFront, or API Gateway; the underlying EC2
+  instances must sit in private subnets. Enforce at the subnet level by setting
+  MapPublicIpOnLaunch to false (see csmm-net-004) and by explicitly setting
+  AssociatePublicIpAddress: false in all EC2 launch templates, Auto Scaling Groups, and
+  CloudFormation/Terraform resource definitions.
 
 risk: >
-  Unencrypted EBS volumes can be copied into a snapshot and shared across AWS accounts.
-  If a snapshot of an unencrypted root or data volume is accidentally made public or shared
-  with an unintended account, the full contents of the volume — including operating system
-  files, application binaries, environment variables, and data files — are immediately
-  accessible to the recipient without any key. This risk is compounded in environments where
-  snapshot creation is automated for backup purposes.
+  An EC2 instance with a public IP is directly reachable from the internet on all open ports,
+  even if a load balancer is in front of it. This allows attackers to bypass WAF rules,
+  rate limiting, and DDoS protections applied at the ALB/CloudFront layer by targeting the
+  instance IP directly. Publicly reachable instances also expose all services running on
+  non-standard ports — monitoring agents, debugging endpoints, metadata proxies — that are
+  not intended to be internet-accessible.
 
 verification:
-  - "Run: aws ec2 describe-volumes | jq '[.Volumes[] | select(.Encrypted == false)] | length' — expected 0."
-  - "Confirm AWS Config rule 'encrypted-volumes' is ENABLED and reports COMPLIANT across all regions."
-  - "For regulated workloads, verify: aws ec2 describe-volumes | jq '[.Volumes[] | select(.KmsKeyId | contains(\"alias/aws/ebs\"))] | length' — expected 0 (no volumes using the default AWS-managed key)."
-  - "Confirm that EC2 launch templates and Auto Scaling Group configurations explicitly set Encrypted: true on all BlockDeviceMappings, preventing any unencrypted volume from being launched."
+  - "Run: aws ec2 describe-instances | jq '[.Reservations[].Instances[] | select(.PublicIpAddress != null)] | length' — document and justify all non-zero results."
+  - "For any instance with a public IP, verify it is tagged PublicIPException=approved with valid ExceptionOwner and ExceptionExpiry tags. Instances with expired or missing exception tags fail."
+  - "Confirm that instances with public IPs represent no more than 5% of the total EC2 fleet."
+  - "Confirm all EC2 launch templates have NetworkInterfaces[].AssociatePublicIpAddress set to false."
+  - "Verify that security groups attached to instances with public IPs do not allow unrestricted inbound access on application ports — traffic must originate only from the load balancer security group."
+  - "Confirm VPC Flow Logs are enabled for the VPC containing any instance with a public IP to provide traffic visibility."
 
 compliance:
-  - framework: "CIS AWS Foundations"
-    control: "2.2.1"
-    version: "3.0"
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC6.6"
   - framework: "NIST 800-53"
-    control: "SC-28"
+    control: "SC-7"
   - framework: "AWS Well-Architected"
-    control: "SEC 08 — How do you protect your data at rest?"
+    control: "SEC 05 — How do you protect your network resources?"
 
 references:
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
-  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encrypt-unencrypted"
-  - "https://docs.aws.amazon.com/config/latest/developerguide/encrypted-volumes.html"
-  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-3"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
+  - "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/ec2-controls.html#ec2-9"

@@ -1,43 +1,47 @@
 id: "csmm-net-021"
-name: "DDoS Protection Strategy"
+name: "VPC Endpoint Policies Scoped — No Unrestricted Principal"
 level: 3
 pillar: "networking"
-priority: "medium"
-severity_weight: 2
+priority: "critical"
+severity_weight: 4
 
 description: >
-  Internet-facing workloads must be protected by a layered DDoS mitigation
-  architecture. At minimum: AWS Shield Advanced enrolled on all public-facing
-  resources (CloudFront, ALB, NLB, Elastic IP, Global Accelerator), WAF rate
-  limiting rules on all application endpoints, and CloudFront as the edge layer
-  absorbing volumetric attacks before they reach origin infrastructure. A DDoS
-  response runbook must be documented and the AWS Shield Response Team (SRT)
-  must be authorized for proactive engagement.
+  Every VPC endpoint (Gateway and Interface) must have a resource policy that
+  restricts access to specific principals and actions — never Principal: "*"
+  with no conditions. The default VPC endpoint policy grants full access to the
+  service for all principals that can reach the endpoint; this default must be
+  replaced with a least-privilege policy that limits which IAM principals can
+  use the endpoint and, for S3 and DynamoDB gateway endpoints, which buckets
+  or tables can be accessed through it. Endpoint policies are a data perimeter
+  control — they enforce that even if an IAM principal is compromised, it cannot
+  use your private endpoint to exfiltrate data to resources outside your organization.
 
 risk: >
-  Without a deliberate DDoS strategy, volumetric or application-layer attacks
-  can overwhelm infrastructure, cause cascading failures, and create availability
-  events that mask other attacks. Shield Standard provides basic L3/L4 protection
-  but cannot mitigate sophisticated application-layer attacks. Shield Advanced
-  provides cost protection, SRT access, and advanced detection that are critical
-  for production workloads.
+  A VPC endpoint with Principal: "*" and no conditions defeats its own purpose.
+  The endpoint routes traffic privately, but any identity that can reach the VPC
+  — including a compromised EC2 instance, a Lambda function, or a container —
+  can use the endpoint to access the full S3 service with no restriction on which
+  buckets or accounts it can reach. This enables data exfiltration to attacker-controlled
+  S3 buckets through a path that bypasses internet egress controls entirely.
+  Scoped endpoint policies, combined with aws:PrincipalOrgID conditions, close
+  this exfiltration path.
 
 verification:
-  - "Confirm Shield Advanced is enabled and all public-facing resources are enrolled"
-  - "Verify WAF rate limiting rules exist on all ALB and API Gateway stages"
-  - "Confirm CloudFront is deployed in front of all internet-facing origins"
-  - "DDoS response runbook must exist at a documented path and contain: (1) escalation contacts with phone numbers, (2) Shield SRT engagement procedure, (3) WAF rate-limit override steps. Verify SRT authorization: aws shield describe-subscription --query 'Subscription.ProactiveEngagementStatus' must return ENABLED."
-  - "Validate health checks are configured for Shield Advanced protected resources"
+  - "List all VPC endpoints: aws ec2 describe-vpc-endpoints | jq '.VpcEndpoints[] | {Id: .VpcEndpointId, Service: .ServiceName, PolicyDocument: .PolicyDocument}'"
+  - "For each endpoint, parse the policy and flag any Statement with Principal: \"*\" and no aws:PrincipalOrgID or aws:PrincipalAccount condition."
+  - "For S3 gateway endpoints specifically: confirm the policy restricts Resource to your own bucket ARNs or your org's buckets — not arn:aws:s3:::*."
+  - "Use IAM Access Analyzer to detect VPC endpoints with overly permissive policies — enable organization-level analysis."
 
 compliance:
   - framework: "SOC2"
-    control: "CC7.1"
+    control: "CC6.6"
   - framework: "NIST 800-53"
-    control: "SC-5"
+    control: "SC-7"
   - framework: "AWS Well-Architected"
-    control: "SEC 06 — How do you protect your compute resources?"
+    control: "SEC 06 — How do you protect your network resources?"
 
 references:
-  - "https://docs.aws.amazon.com/waf/latest/developerguide/shield-chapter.html"
-  - "https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/aws-best-practices-ddos-resiliency.html"
-  - "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-srt-support.html"
+  - "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-access.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies-vpc-endpoint.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"
+  - "https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-policies.html"

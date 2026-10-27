@@ -1,39 +1,40 @@
 id: "csmm-net-009"
-name: "NACL Deny Known Bad Ports"
+name: "Enable VPC Flow Logs"
 level: 2
 pillar: "networking"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Network ACLs must include explicit DENY rules for inbound and outbound
-  traffic on ports associated with inherently insecure or legacy protocols,
-  including Telnet (23), FTP control (21) and data (20), RSH/RExec (514/512),
-  TFTP (69), SNMP (161/162), and SMB (445/139). These rules must be placed
-  with rule numbers lower than any permissive ALLOW rules to ensure they
-  take precedence.
+  VPC Flow Logs must be enabled on all VPCs and configured to capture ACCEPT
+  and REJECT traffic, with log data delivered to CloudWatch Logs or S3 with
+  a retention policy of at least 90 days. Flow logs must use log format version 5 with fields: srcaddr, dstaddr, srcport, dstport, protocol, tcp-flags, type, pkt-srcaddr, pkt-dstaddr
+  for richer forensic analysis.
 
 risk: >
-  Ports associated with legacy protocols are actively and continuously scanned
-  by automated threat actors across the internet. Services accidentally exposed
-  on these ports — whether misconfigured applications or default AWS service
-  behaviors — can be exploited without authentication or via well-known
-  vulnerabilities. NACL-level blocking provides a defense-in-depth layer that
-  operates independently of security group configuration errors.
+  Without VPC Flow Logs, security teams have no visibility into which IP
+  addresses are communicating with instances, making network-based anomaly
+  detection, lateral movement tracing, and forensic reconstruction impossible
+  after an incident. Regulatory frameworks including PCI DSS and HIPAA
+  explicitly require network traffic logging, and gaps in this data can result
+  in audit failures and inability to demonstrate breach scope during assessments.
 
 verification:
-  - "For each VPC subnet, run aws ec2 describe-network-acls and inspect inbound and outbound rules for explicit DENY entries on ports 20, 21, 23, 69, 139, 161, 162, 445, 512, 514."
-  - "Confirm the DENY rules have lower rule numbers than any ALLOW rules covering the same port range."
-  - "Use AWS Config or a custom Lambda to enumerate all NACLs across all regions and flag any missing port denials."
-  - "Validate that the rules apply to both TCP and UDP where applicable (e.g., SNMP uses UDP 161/162, TFTP uses UDP 69)."
+  - "Run aws ec2 describe-flow-logs --filter Name=resource-type,Values=VPC for each region and confirm every VPC ID has at least one active flow log."
+  - "Confirm the flow log TrafficType is ALL (not ACCEPT or REJECT only) and the LogFormat includes enhanced metadata fields."
+  - "Verify the destination (CloudWatch Logs group or S3 bucket) has a retention policy of at least 90 days and appropriate access controls."
+  - "Check that AWS Config rule vpc-flow-logs-enabled is deployed and compliant in all in-scope regions."
 
 compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.9"
+    version: "3.0"
   - framework: "SOC2"
-    control: "CC6.6"
+    control: "CC7.2"
   - framework: "NIST 800-53"
-    control: "SC-7"
+    control: "AU-12"
 
 references:
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html"
-  - "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-recommended-nacl-rules.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html"
+  - "https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-cwl.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/vpc-flow-logs-enabled.html"

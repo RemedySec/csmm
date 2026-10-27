@@ -1,0 +1,45 @@
+id: "csmm-dat-014"
+name: "S3 Server Access Logging Enabled on Sensitive Buckets"
+level: 2
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All S3 buckets containing sensitive data (application data, backups, logs,
+  artifacts, CloudTrail delivery targets) must have server access logging enabled,
+  delivering logs to a separate, access-controlled logging bucket. The logging
+  bucket itself must not have server access logging pointing back to itself.
+  Logging must capture all requests — GET, PUT, DELETE, HEAD — so that any
+  unauthorized read of sensitive data is detectable post-incident.
+
+risk: >
+  Without S3 server access logging, data exfiltration from S3 is silent. An attacker
+  who obtains valid AWS credentials and reads or copies objects from a sensitive bucket
+  leaves no trace in CloudTrail (which only logs control-plane API calls, not object
+  GETs from the S3 API endpoint). Server access logs are the only record of who read
+  which object and when. In breach investigations, absence of S3 access logs routinely
+  means the blast radius of a credential compromise cannot be determined, prolonging
+  incident response and expanding legal exposure.
+
+verification:
+  - "List all buckets: aws s3api list-buckets — for each bucket containing sensitive data, run: aws s3api get-bucket-logging --bucket <name>."
+  - "Confirm LoggingEnabled is present and TargetBucket points to a dedicated logging bucket, not itself."
+  - "Verify the target logging bucket has a restrictive bucket policy (s3:PutObject allowed only for the logging service principal, no public read)."
+  - "AWS Config rule: s3-bucket-logging-enabled — deploy and confirm all sensitive buckets are compliant."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.6"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "AU-2"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-logging-enabled.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html"

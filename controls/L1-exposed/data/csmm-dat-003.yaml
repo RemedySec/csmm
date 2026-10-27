@@ -1,0 +1,45 @@
+id: "csmm-dat-003"
+name: "S3 Default Encryption Enabled"
+level: 1
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All S3 buckets must have server-side encryption enabled as the default for all objects.
+  The minimum acceptable configuration is SSE-S3 (AES-256); buckets storing sensitive,
+  regulated, or classified data must use SSE-KMS with a customer-managed KMS key (CMK) with
+  key rotation enabled. Enable via the aws s3api put-bucket-encryption API and enforce via
+  AWS Config rule 's3-bucket-server-side-encryption-enabled'. Any PutObject request without
+  an explicit encryption header must still encrypt via the bucket default.
+
+risk: >
+  Unencrypted S3 data at rest violates PCI-DSS, HIPAA, SOC2, and most enterprise data
+  governance policies. If an S3 bucket is accidentally made public, exposed via a misconfigured
+  pre-signed URL, or accessed by a threat actor who compromised an IAM role, unencrypted
+  objects are immediately readable with no additional decryption step required. SSE-KMS with
+  CMKs also provides a separate layer of access control through KMS key policies, enabling
+  independent key revocation even if bucket policies are compromised.
+
+verification:
+  - "Run: aws s3api list-buckets | jq -r '.Buckets[].Name' | xargs -I{} aws s3api get-bucket-encryption --bucket {} — all buckets must return a ServerSideEncryptionConfiguration with at least AES256 or aws:kms."
+  - "Confirm AWS Config rule 's3-bucket-server-side-encryption-enabled' is ENABLED and reports COMPLIANT."
+  - "Upload a test object without specifying an encryption header and verify the object's ServerSideEncryption attribute is set in the metadata."
+  - "For buckets with SSE-KMS, verify the referenced KMS key has key rotation enabled: aws kms get-key-rotation-status --key-id <key-id>."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.1.1"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "SC-28"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/serv-side-encryption.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-server-side-encryption-enabled.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-4"

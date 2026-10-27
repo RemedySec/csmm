@@ -1,41 +1,41 @@
 id: "csmm-iam-021"
-name: "Periodic Least Privilege Access Review"
+name: "Enforce ABAC/RBAC Access Patterns"
 level: 3
 pillar: "iam"
-priority: "high"
-severity_weight: 3
+priority: "medium"
+severity_weight: 2
 
 description: >
-  IAM Access Analyzer unused access findings older than 90 days must be auto-escalated
-  via Security Hub to a ticket system with an assigned owner. Findings unresolved after
-  14 additional days trigger automatic policy scoping using Access Analyzer policy
-  generation to produce right-sized replacement policies. No IAM policy may grant
-  Action: '*' on Resource: '*' outside of roles tagged RoleType=BreakGlass.
+  Zero inline policies may be attached to IAM users — all access must be granted via
+  managed policies attached to IAM roles or groups. All managed policies must include
+  at least one tag-based condition key (aws:PrincipalTag, aws:ResourceTag, or
+  aws:RequestTag) OR be attached to a role following the naming pattern
+  {team}-{function}-role. All resources must carry mandatory tags: Team, Environment,
+  and Service.
 
 risk: >
-  Permissions accumulate over time as teams request access for projects, migrations,
-  and incidents but rarely relinquish them afterward. This privilege creep creates
-  an ever-expanding blast radius — a compromised role with months of accumulated
-  unused permissions grants attackers far broader access than the role's current
-  function requires.
+  Without structured ABAC or RBAC patterns, access control devolves into per-user
+  or per-resource inline policies that are impossible to audit at scale. Teams
+  create one-off policies for each request, leading to thousands of unique policy
+  documents with inconsistent scoping. This makes it infeasible to answer basic
+  questions like "who can access production data?" and creates gaps that only
+  surface during incidents.
 
 verification:
-  - "Count Access Analyzer unused access findings older than 90 days: aws accessanalyzer list-findings — result must be zero or all must have linked tickets."
-  - "List all IAM policies: aws iam list-policies --scope Local and inspect each policy document. Zero policies may contain Action: '*' with Resource: '*' unless attached to a role tagged RoleType=BreakGlass."
-  - "Verify EventBridge rule exists that routes Access Analyzer findings to a ticket system (Jira, ServiceNow, or equivalent)."
-  - "Confirm at least one policy was auto-scoped in the last 90 days by checking Access Analyzer policy generation history."
+  - "Run: aws iam list-users, then for each user run aws iam list-user-policies. Result must be empty for all users (zero inline policies)."
+  - "Run: aws iam list-attached-user-policies for all users. Result must be empty (all policies attached via roles or groups, not users)."
+  - "For all locally managed policies, retrieve the policy document and confirm it contains at least one Condition key from: aws:PrincipalTag, aws:ResourceTag, aws:RequestTag. Policies without conditions must be attached only to roles matching the naming pattern {team}-{function}-role."
+  - "Verify Tag Policy enforces mandatory tags Team, Environment, Service via: aws organizations describe-policy for all tag policies."
 
 compliance:
   - framework: "SOC2"
     control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-6(7)"
-  - framework: "ISO 27001"
-    control: "A.9.2.5"
+    control: "AC-3"
   - framework: "AWS Well-Architected"
     control: "SEC 03 — How do you manage permissions for people and machines?"
 
 references:
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_attribute-based-access-control.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html"

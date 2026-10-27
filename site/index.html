@@ -592,7 +592,7 @@ footer a:hover { text-decoration: underline; }
             <th></th>
             <th>IAM<span class="weight">30%</span></th>
             <th>Networking<span class="weight">20%</span></th>
-            <th>Storage<span class="weight">20%</span></th>
+            <th>Data<span class="weight">20%</span></th>
             <th>Compute<span class="weight">15%</span></th>
             <th>Monitoring<span class="weight">15%</span></th>
           </tr>
@@ -693,7 +693,7 @@ footer a:hover { text-decoration: underline; }
         <h4>Pillar Weights</h4>
         <div class="weight-row"><span class="name">IAM</span><span class="val">30%</span></div>
         <div class="weight-row"><span class="name">Networking</span><span class="val">20%</span></div>
-        <div class="weight-row"><span class="name">Storage</span><span class="val">20%</span></div>
+        <div class="weight-row"><span class="name">Data</span><span class="val">20%</span></div>
         <div class="weight-row"><span class="name">Compute</span><span class="val">15%</span></div>
         <div class="weight-row"><span class="name">Monitoring</span><span class="val">15%</span></div>
       </div>
@@ -706,13 +706,13 @@ footer a:hover { text-decoration: underline; }
   <div class="container">
     <div class="section-header">
       <div class="section-label">Deep Dive</div>
-      <h2 class="section-title">IAM Pillar &mdash; 26 Controls</h2>
+      <h2 class="section-title">IAM Pillar &mdash; 29 Controls</h2>
       <p class="section-desc">Identity & Access Management is the highest-weighted pillar at 30%. Here's every control across all five maturity levels.</p>
     </div>
     <div class="iam-grid">
       <!-- L1 -->
       <div class="iam-col col-l1">
-        <div class="iam-col-header">L1<span class="col-sub">Exposed &middot; 8</span></div>
+        <div class="iam-col-header">L1<span class="col-sub">Exposed &middot; 11</span></div>
         <div class="iam-control"><span class="ctrl-id">iam-001</span><span class="ctrl-name">Enforce MFA for All Console Users</span></div>
         <div class="iam-control"><span class="ctrl-id">iam-002</span><span class="ctrl-name">No Root Account Access Keys</span></div>
         <div class="iam-control"><span class="ctrl-id">iam-003</span><span class="ctrl-name">Root MFA with Hardware Token</span></div>
@@ -721,40 +721,43 @@ footer a:hover { text-decoration: underline; }
         <div class="iam-control"><span class="ctrl-id">iam-006</span><span class="ctrl-name">Remove Unused Creds (45d)</span></div>
         <div class="iam-control"><span class="ctrl-id">iam-007</span><span class="ctrl-name">Password Policy 14+ Chars</span></div>
         <div class="iam-control"><span class="ctrl-id">iam-008</span><span class="ctrl-name">Deny Root Usage via SCP</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-009</span><span class="ctrl-name">No Policies Attached Directly to Users</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-010</span><span class="ctrl-name">No Wildcard Principal in Role Trust</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-011</span><span class="ctrl-name">No Wildcard Action + Resource in Policies</span></div>
       </div>
       <!-- L2 -->
       <div class="iam-col col-l2">
         <div class="iam-col-header">L2<span class="col-sub">Guarded &middot; 7</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-009</span><span class="ctrl-name">Deny Leaving Org via SCP</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-010</span><span class="ctrl-name">Deny CloudTrail Disable</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-011</span><span class="ctrl-name">MFA for Sensitive Actions</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-012</span><span class="ctrl-name">Restrict Regions via SCP</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-013</span><span class="ctrl-name">Enforce Temporary Credentials</span></div>
-        <div class="iam-control"><span class="ctrl-id">gov-001</span><span class="ctrl-name">CloudTrail All Regions</span></div>
-        <div class="iam-control"><span class="ctrl-id">gov-002</span><span class="ctrl-name">CloudTrail Log Validation</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-012</span><span class="ctrl-name">MFA for Sensitive Actions via SCP</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-013</span><span class="ctrl-name">Restrict Regions via SCP</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-014</span><span class="ctrl-name">Enforce Temporary Credentials</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-015</span><span class="ctrl-name">Deny CloudTrail Disable via SCP</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-016</span><span class="ctrl-name">Deny Leaving Org via SCP</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-017</span><span class="ctrl-name">No Unused IAM Roles (90d)</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-018</span><span class="ctrl-name">OIDC Trust Scoped to Specific Subject</span></div>
       </div>
       <!-- L3 -->
       <div class="iam-col col-l3">
         <div class="iam-col-header">L3<span class="col-sub">Hardened &middot; 6</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-016</span><span class="ctrl-name">Permission Boundaries</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-017</span><span class="ctrl-name">Deny IAM Admin via Boundary</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-018</span><span class="ctrl-name">Least Privilege Review</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-019</span><span class="ctrl-name">Enforce ABAC/RBAC</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-020</span><span class="ctrl-name">Cross-Account Trust Controls</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-021</span><span class="ctrl-name">IAM Data Perimeter</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-019</span><span class="ctrl-name">Permission Boundaries on Non-Admin Roles</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-020</span><span class="ctrl-name">Deny IAM Admin via Boundary</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-021</span><span class="ctrl-name">Enforce ABAC/RBAC Patterns</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-022</span><span class="ctrl-name">Least Privilege Access Review</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-023</span><span class="ctrl-name">Cross-Account Trust Controls</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-024</span><span class="ctrl-name">IAM Data Perimeter Controls</span></div>
       </div>
       <!-- L4 -->
       <div class="iam-col col-l4">
         <div class="iam-col-header">L4<span class="col-sub">Verified &middot; 3</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-026</span><span class="ctrl-name">IAM Access Analyzer</span></div>
-        <div class="iam-control"><span class="ctrl-id">iam-027</span><span class="ctrl-name">Temporary Elevated Access (JIT)</span></div>
-        <div class="iam-control"><span class="ctrl-id">ver-001</span><span class="ctrl-name">IaC Scanned in CI/CD</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-025</span><span class="ctrl-name">IAM Access Analyzer Enabled</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-026</span><span class="ctrl-name">Temporary Elevated Access (JIT)</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-027</span><span class="ctrl-name">IaC Scanned in CI/CD</span></div>
       </div>
       <!-- L5 -->
       <div class="iam-col col-l5">
         <div class="iam-col-header">L5<span class="col-sub">Autonomous &middot; 2</span></div>
-        <div class="iam-control"><span class="ctrl-id">aut-001</span><span class="ctrl-name">Auto-Remediation for L1</span></div>
-        <div class="iam-control"><span class="ctrl-id">aut-002</span><span class="ctrl-name">Policy Drift Auto-Reverted</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-028</span><span class="ctrl-name">Auto-Remediation for L1 Controls</span></div>
+        <div class="iam-control"><span class="ctrl-id">iam-029</span><span class="ctrl-name">Policy Drift Auto-Reverted</span></div>
       </div>
     </div>
   </div>

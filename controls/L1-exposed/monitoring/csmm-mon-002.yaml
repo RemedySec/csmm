@@ -1,0 +1,43 @@
+id: "csmm-mon-002"
+name: "AWS Config Enabled in All Regions"
+level: 1
+pillar: "monitoring"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  AWS Config must be enabled in every AWS region in every account, with a
+  configuration recorder and delivery channel active. The recorder must capture
+  all supported resource types (AllSupported: true) and include global resource
+  types (IncludeGlobalResourceTypes: true) in at least one region. Using AWS
+  Organizations integration, Config should be managed centrally with a delegated
+  administrator account aggregating findings across all member accounts and regions.
+
+risk: >
+  AWS Config is the foundation for configuration compliance, drift detection,
+  and resource history. Without Config, there is no continuous record of what
+  resources exist, what their configurations are, and when they changed —
+  making it impossible to detect unauthorized resource creation, configuration
+  drift from security baselines, or to reconstruct the state of the environment
+  at the time of an incident. Most AWS Security Hub controls and many compliance
+  frameworks depend on Config being active.
+
+verification:
+  - "For each region: aws configservice describe-configuration-recorders | jq '.ConfigurationRecorders[] | {name, recordingGroup}' — confirm AllSupported is true."
+  - "Confirm recorder is active: aws configservice describe-configuration-recorder-status | jq '.ConfigurationRecordersStatus[] | {name, recording, lastStatus}' — recording must be true and lastStatus must be SUCCESS."
+  - "Confirm delivery channel exists and is delivering: aws configservice describe-delivery-channel-status | jq '.DeliveryChannelsStatus[].configHistoryDeliveryInfo.lastStatus' — expect SUCCESS."
+  - "AWS Config rule: multi-region-cloud-trail-enabled — also confirm Config aggregator covers all accounts in the organization."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "3.5"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC7.1"
+  - framework: "NIST 800-53"
+    control: "CM-8"
+
+references:
+  - "https://docs.aws.amazon.com/config/latest/developerguide/gs-console.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html"

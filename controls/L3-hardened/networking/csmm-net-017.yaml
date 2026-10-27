@@ -1,36 +1,40 @@
 id: "csmm-net-017"
-name: "WAF Associated with ALBs"
+name: "Network Segmentation Strategy"
 level: 3
 pillar: "networking"
 priority: "high"
 severity_weight: 3
 
 description: >
-  Every internet-facing Application Load Balancer must have an AWS WAF Web ACL
-  associated with it. The Web ACL must include at minimum the AWS Managed Rules
-  Common Rule Set and the Known Bad Inputs rule group, with logging enabled and
-  directed to a centralized log destination for security monitoring.
+  Implement a documented network segmentation strategy using separate VPCs per
+  workload classification (production, staging, development, shared services) with
+  explicit inter-VPC connectivity via Transit Gateway or VPC peering. Each VPC must
+  have tiered subnets (public, private, isolated). Workloads must follow subnet tier placement rules: databases and caches in isolated subnets (no route to 0.0.0.0/0), application services in private subnets (NAT-only egress), load balancers and CDN origins in public subnets. Exceptions require subnet tag SubnetException=approved with ExceptionExpiry date. Cross-environment traffic must traverse inspection points
+  (Network Firewall or third-party appliances) with deny-by-default routing.
 
 risk: >
-  ALBs without WAF protection have no application-layer filtering for SQL injection,
-  cross-site scripting, remote file inclusion, and other OWASP Top 10 attack patterns.
-  A single unprotected ALB can serve as an entry point that bypasses the organization's
-  broader WAF investment and leaves application vulnerabilities directly exploitable
-  from the internet.
+  Without deliberate segmentation, a flat network allows lateral movement from any
+  compromised workload to every other resource in the environment. A single breached
+  EC2 instance in a development subnet can reach production databases, internal APIs,
+  and management planes. Segmentation limits blast radius and forces attackers through
+  chokepoints where detection and prevention controls are concentrated.
 
 verification:
-  - "List all internet-facing ALBs and cross-reference with WAF associations: aws wafv2 list-resources-for-web-acl --resource-type APPLICATION_LOAD_BALANCER"
-  - "Identify any ALB ARNs not present in the WAF association list"
-  - "For each associated Web ACL, confirm AWS-AWSManagedRulesCommonRuleSet and AWSManagedRulesKnownBadInputsRuleSet are present and set to Block"
-  - "Confirm WAF logging is enabled and logs are delivered to the central security log bucket or SIEM"
+  - "For every VPC, run: aws ec2 describe-route-tables. Isolated subnets must have no route to 0.0.0.0/0. RDS and ElastiCache subnet groups must reference only isolated subnets. No EC2 instance in an isolated subnet may have an associated public IP."
+  - "Verify production VPCs have no direct peering to development or sandbox VPCs"
+  - "Validate Transit Gateway route tables enforce deny-by-default between security domains"
+  - "Confirm workloads are placed in private or isolated subnets unless they explicitly require public ingress"
+  - "Test that cross-environment traffic is routed through an inspection VPC with Network Firewall"
 
 compliance:
   - framework: "SOC2"
     control: "CC6.6"
   - framework: "NIST 800-53"
     control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 05 — How do you protect your network resources?"
 
 references:
-  - "https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html"
-  - "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html"
-  - "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
+  - "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html"
+  - "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+  - "https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html"

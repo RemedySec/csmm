@@ -1,0 +1,49 @@
+id: "csmm-dat-015"
+name: "No Cross-Account S3 Bucket Access Without Organization Condition"
+level: 2
+pillar: "data"
+priority: "critical"
+severity_weight: 4
+
+description: >
+  Any S3 bucket policy that grants access to a principal outside the bucket's
+  own AWS account must include a condition restricting access to known, controlled
+  accounts or to accounts within your AWS Organization (aws:PrincipalOrgID).
+  Bucket policies that grant s3:GetObject, s3:PutObject, s3:ListBucket, or
+  s3:* to external AWS accounts without an aws:PrincipalOrgID or explicit
+  aws:PrincipalAccount condition must be remediated immediately.
+  Buckets with no bucket policy that are accessible via ACLs to external
+  accounts must also be flagged (ACLs should be disabled per csmm-dat-008).
+
+risk: >
+  A bucket policy that allows cross-account access without scoping to your
+  organization is one IAM credential compromise away from full data exfiltration.
+  The attacker does not need to be in your account — they only need credentials
+  from any account that matches the trust. Misconfigured cross-account bucket
+  policies are a leading cause of S3 data breaches and are frequently set during
+  one-off data sharing arrangements that are never cleaned up. IAM Access Analyzer
+  surfaces these as external access findings; unreviewed findings indicate no one
+  is monitoring the data perimeter.
+
+verification:
+  - "Enable IAM Access Analyzer with organization-level analysis — all S3 external access findings must be reviewed and either resolved or marked as intentional with documented business justification."
+  - "For each bucket: aws s3api get-bucket-policy --bucket <name> | jq '.Policy | fromjson | .Statement[] | select(.Principal != null) | select(.Principal.AWS != null) | select(.Principal.AWS | test(\"arn:aws:iam::\"))' — confirm all cross-account principals are either within your org or explicitly approved."
+  - "Verify cross-account policies include Condition: aws:PrincipalOrgID matching your organization ID, or list only specific known account ARNs."
+  - "Run Security Hub CIS control check for S3 bucket public access — cross-account findings surface here too."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.1.5"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.3"
+  - framework: "NIST 800-53"
+    control: "AC-3"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data at rest?"
+
+references:
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-resources.html#access-analyzer-s3"
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html#example-bucket-policies-use-case-8"
+  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_s3.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-principalorgid"

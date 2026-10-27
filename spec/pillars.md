@@ -14,7 +14,7 @@ CSMM organizes all controls into five security pillars. Each pillar represents a
 |-------------|--------|-------------------|
 | IAM         | 30%    | Most breaches originate from identity compromise |
 | Networking  | 20%    | Exposure surface determines reachability of assets |
-| Storage     | 20%    | Data protection is the primary security outcome |
+| Data     | 20%    | Data protection is the primary security outcome |
 | Compute     | 15%    | Workloads are the primary target of post-compromise activity |
 | Monitoring  | 15%    | Detection reduces mean time to detect and respond to breaches |
 
@@ -76,11 +76,11 @@ Networking controls also underpin data protection: without proper network segmen
 
 ---
 
-## Storage — Data Protection (20%)
+## Data — Data Protection (20%)
 
 ### What It Covers
 
-The Storage pillar encompasses all controls related to protecting data at rest, governing access to data stores, and ensuring recoverability. This includes:
+The Data pillar encompasses all controls related to protecting data at rest, governing access to data stores, and ensuring recoverability. This includes:
 
 - S3 bucket configuration (public access blocks, encryption, access logging, bucket policies)
 - RDS and Aurora encryption, backup, and access control
@@ -92,13 +92,13 @@ The Storage pillar encompasses all controls related to protecting data at rest, 
 - Backup policies and retention
 - Data classification and inventory
 
-### Why Storage is Weighted 20%
+### Why Data is Weighted 20%
 
 Data exposure is the most directly visible and often the most impactful consequence of a cloud security failure. The theft or public exposure of customer data, intellectual property, or regulated information is typically the event that triggers regulatory action, media attention, and customer harm.
 
-Storage controls are weighted at 20% because in a well-architected system, storage should be protected by multiple layers above it (IAM controls restrict who can access data, network controls restrict which paths can reach data stores). A failure that reaches the storage layer represents a multi-layer breakdown. The storage pillar ensures that even when upper layers fail, data at rest is encrypted, access is logged, and recovery is possible.
+Data controls are weighted at 20% because in a well-architected system, storage should be protected by multiple layers above it (IAM controls restrict who can access data, network controls restrict which paths can reach data stores). A failure that reaches the data layer represents a multi-layer breakdown. The data pillar ensures that even when upper layers fail, data at rest is encrypted, access is logged, and recovery is possible.
 
-Storage is also where compliance obligations are most concentrated — GDPR, HIPAA, PCI-DSS, and similar frameworks have specific requirements for data encryption, access control, and audit logging that map directly to this pillar.
+Data is also where compliance obligations are most concentrated — GDPR, HIPAA, PCI-DSS, and similar frameworks have specific requirements for data encryption, access control, and audit logging that map directly to this pillar.
 
 ---
 
@@ -176,7 +176,7 @@ Examples of cross-cutting control assignments:
 | SCPs preventing root usage           | IAM             | Directly restricts identity/access behavior |
 | VPC Flow Logs                        | Networking      | Directly monitors network traffic |
 | CloudTrail (log file validation)     | Compute         | Primarily a platform governance control |
-| S3 server access logging             | Storage         | Directly monitors data store access |
+| S3 server access logging             | Data         | Directly monitors data store access |
 | Security Hub standard enablement     | Monitoring      | Platform-level detection aggregation control |
 | Config enabled in all regions        | Compute         | Platform-level configuration monitoring |
 | GuardDuty threat detection           | Monitoring      | Directly provides threat detection and alerting |
@@ -193,7 +193,7 @@ The 30/20/20/15/15 split reflects the following principles:
 
 2. **Network exposure determines reachability.** Without network controls, internet-exposed services are reachable by anyone. Networking deserves meaningful weight but is secondary to identity because network controls can be bypassed by the IAM control plane.
 
-3. **Data protection is the ultimate outcome.** Storage controls ensure that even when other layers fail, data at rest is encrypted and access is logged. Storage retains its 20% weight as data exposure remains the most directly visible consequence of a cloud security failure.
+3. **Data protection is the ultimate outcome.** Data controls ensure that even when other layers fail, data at rest is encrypted and access is logged. Data retains its 20% weight as data exposure remains the most directly visible consequence of a cloud security failure.
 
 4. **Compute hardening limits breach impact.** Secure workloads limit lateral movement and persistence, reducing the damage an attacker can do after gaining initial access.
 

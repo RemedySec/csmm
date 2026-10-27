@@ -1,37 +1,38 @@
 id: "csmm-iam-019"
-name: "Deny IAM Admin Actions via Boundary"
+name: "Permission Boundaries on All Non-Admin Roles"
 level: 3
 pillar: "iam"
-priority: "critical"
-severity_weight: 4
+priority: "high"
+severity_weight: 3
 
 description: >
-  Permission boundary policies must explicitly deny IAM administrative actions
-  including iam:CreatePolicy, iam:AttachRolePolicy, iam:PutRolePolicy, iam:PassRole
-  with wildcard resources, and iam:CreatePolicyVersion. These denies must be present
-  even on roles that appear trusted, since boundaries are the last line of defense
-  against privilege escalation.
+  All non-administrative IAM roles must have a permission boundary policy attached
+  that restricts the maximum effective permissions the role can exercise. A role is
+  classified as administrative if it is tagged RoleType=Admin. All roles without this
+  tag must have a permission boundary attached. Administrative roles must be limited
+  to fewer than 5 per account. Permission boundaries act as a hard ceiling regardless
+  of what identity-based policies grant, preventing privilege escalation through role
+  assumption chains.
 
 risk: >
-  Even roles considered trusted by developers or operators should not have unconstrained
-  IAM modification capabilities; compromised credentials, supply-chain attacks, or
-  insider threats can abuse IAM admin actions to silently elevate privileges. Without
-  an explicit boundary-level deny, a single compromised role can create persistent
-  backdoor access that survives incident response.
+  Without permission boundaries, any non-admin role that can create or modify IAM
+  policies can escalate its own privileges to full administrative access. This creates
+  an implicit privilege escalation path that is difficult to detect through policy
+  reviews alone and can be exploited by compromised application credentials.
 
 verification:
-  - "Retrieve all permission boundary policies: aws iam list-policies --scope Local"
-  - "For each boundary policy, check the policy document denies iam:Create*, iam:Attach*, iam:Put*, iam:PassRole on resource '*'"
-  - "Confirm no boundary policy contains an Allow on iam:* that would override the deny"
-  - "Validate that SCPs at the organization level reinforce these denies as a secondary control"
+  - "List all IAM roles: aws iam list-roles --query 'Roles[*].{Name:RoleName,Boundary:PermissionsBoundary}'"
+  - "Filter roles missing PermissionsBoundary. For each, check for tag RoleType=Admin. Any role without a boundary AND without RoleType=Admin tag fails. Verify admin role count per account is fewer than 5."
+  - "For each role with a boundary, verify the boundary policy explicitly denies iam:CreatePolicy, iam:AttachRolePolicy, and iam:PutRolePolicy"
+  - "Confirm boundary policies are managed centrally and not modifiable by role owners"
 
 compliance:
   - framework: "SOC2"
-    control: "CC6.1"
+    control: "CC6.3"
   - framework: "NIST 800-53"
-    control: "AC-6(2)"
+    control: "AC-6(1)"
 
 references:
   - "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html"
-  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
-  - "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  - "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  - "https://aws.amazon.com/blogs/security/when-and-how-to-use-aws-iam-permission-boundaries/"

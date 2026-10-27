@@ -12,13 +12,13 @@ CSMM defines five maturity levels (L1–L5). Each level builds on the previous o
 
 **Gating Rule (applies to all levels):** An organization must achieve a weighted level score of ≥80% on level N before level N+1 controls count toward the overall score. This is evaluated per pillar. See [scoring.md](scoring.md) for the full formula.
 
-| Level | Name       | Approx. Controls | Key Themes |
-|-------|------------|------------------|------------|
-| L1    | Exposed    | ~35              | MFA, root protection, public access blocks, default SG, basic encryption, GuardDuty |
-| L2    | Guarded    | ~40              | SCPs, IMDSv2, VPC Flow Logs, CloudTrail, NACLs, TLS, RDS encryption, backups, CloudWatch alarms, Security Hub |
-| L3    | Hardened   | ~35              | Permission boundaries, ABAC/RBAC, cross-account trust, data perimeters, container security |
-| L4    | Verified   | ~20              | IaC scanning, drift detection, resource-to-source mapping, blast radius, shadow IT |
-| L5    | Autonomous | ~10              | Auto-remediation, self-heal, anomaly response, zero-trust loops |
+| Level | Name       | Controls | Key Themes |
+|-------|------------|----------|------------|
+| L1    | Exposed    | 34       | MFA, root protection, public access blocks, encryption at rest, CloudTrail, Config |
+| L2    | Guarded    | 27       | SCPs, IMDSv2, VPC Flow Logs, GuardDuty, NACLs, backups, CIS CloudWatch alarms, Security Hub |
+| L3    | Hardened   | 25       | Permission boundaries, ABAC/RBAC, cross-account trust, data perimeters, container security |
+| L4    | Verified   | 10       | Access Analyzer, JIT access, IaC scanning, DR architecture, golden AMIs |
+| L5    | Autonomous | 6        | Auto-remediation, self-heal, SOAR, automated secret rotation |
 
 ---
 
@@ -26,7 +26,7 @@ CSMM defines five maturity levels (L1–L5). Each level builds on the previous o
 
 **Tagline:** "Stop the basics from being completely broken."
 
-**Approximate Control Count:** ~35
+**Control Count:** 34
 
 ### Description
 
@@ -38,30 +38,32 @@ L1 controls tend to be binary (enabled/disabled or configured/not configured), v
 
 ### Example Controls
 
+> IDs below follow the `csmm-<pillar>-<NNN>` convention and are illustrative — see `controls/` for the authoritative catalog.
+
 | ID           | Name                                                         | Severity  |
 |--------------|--------------------------------------------------------------|-----------|
-| IAM-L1-001   | MFA enabled for all IAM users with console access            | critical  |
-| IAM-L1-002   | Root account has MFA enabled                                 | critical  |
-| IAM-L1-003   | Root account has no active access keys                       | critical  |
-| IAM-L1-004   | Root account is not used for day-to-day tasks                | high      |
-| IAM-L1-005   | No IAM users with AdministratorAccess except break-glass     | high      |
-| IAM-L1-006   | IAM password policy meets minimum requirements               | medium    |
-| IAM-L1-007   | Access keys rotated within 90 days                           | high      |
-| IAM-L1-008   | Unused IAM credentials deactivated within 90 days            | high      |
-| MON-L1-001   | GuardDuty enabled in all regions                             | high      |
-| NET-L1-001   | Default security group in every VPC blocks all traffic       | high      |
-| NET-L1-002   | No security group allows unrestricted SSH (0.0.0.0/0 port 22) | critical |
-| NET-L1-003   | No security group allows unrestricted RDP (0.0.0.0/0 port 3389) | critical |
-| NET-L1-004   | No security group allows unrestricted access on all ports    | critical  |
-| STR-L1-001   | S3 account-level public access block enabled                 | critical  |
-| STR-L1-002   | No S3 buckets with public ACLs enabled                       | critical  |
-| STR-L1-003   | No S3 buckets with public bucket policy                      | critical  |
-| STR-L1-004   | EBS volumes encrypted at rest                                | high      |
-| STR-L1-005   | S3 buckets have default encryption enabled                   | high      |
-| STR-L1-006   | No S3 bucket policies with wildcard principal without condition | high    |
-| COM-L1-001   | EC2 instances do not use deprecated AMIs older than one year | medium    |
-| COM-L1-002   | No EC2 instances with public IPs in non-DMZ subnets          | high      |
-| COM-L1-003   | CloudWatch billing alerts configured                         | low       |
+| csmm-iam-001   | MFA enabled for all IAM users with console access            | critical  |
+| csmm-iam-002   | Root account has MFA enabled                                 | critical  |
+| csmm-iam-003   | Root account has no active access keys                       | critical  |
+| csmm-iam-004   | Root account is not used for day-to-day tasks                | high      |
+| csmm-iam-005   | No IAM users with AdministratorAccess except break-glass     | high      |
+| csmm-iam-006   | IAM password policy meets minimum requirements               | medium    |
+| csmm-iam-007   | Access keys rotated within 90 days                           | high      |
+| csmm-iam-008   | Unused IAM credentials deactivated within 90 days            | high      |
+| csmm-mon-001   | GuardDuty enabled in all regions                             | high      |
+| csmm-net-001   | Default security group in every VPC blocks all traffic       | high      |
+| csmm-net-002   | No security group allows unrestricted SSH (0.0.0.0/0 port 22) | critical |
+| csmm-net-003   | No security group allows unrestricted RDP (0.0.0.0/0 port 3389) | critical |
+| csmm-net-004   | No security group allows unrestricted access on all ports    | critical  |
+| csmm-dat-001   | S3 account-level public access block enabled                 | critical  |
+| csmm-dat-002   | No S3 buckets with public ACLs enabled                       | critical  |
+| csmm-dat-003   | No S3 buckets with public bucket policy                      | critical  |
+| csmm-dat-004   | EBS volumes encrypted at rest                                | high      |
+| csmm-dat-005   | S3 buckets have default encryption enabled                   | high      |
+| csmm-dat-006   | No S3 bucket policies with wildcard principal without condition | high    |
+| csmm-cmp-001   | EC2 instances do not use deprecated AMIs older than one year | medium    |
+| csmm-cmp-002   | No EC2 instances with public IPs in non-DMZ subnets          | high      |
+| csmm-cmp-003   | CloudWatch billing alerts configured                         | low       |
 
 ### Gating Rule
 
@@ -73,7 +75,7 @@ To unlock L2 scoring, an organization must achieve ≥80% of the available weigh
 
 **Tagline:** "Gain visibility and start enforcing preventive guardrails."
 
-**Approximate Control Count:** ~40
+**Control Count:** 27
 
 ### Description
 
@@ -85,36 +87,38 @@ L2 controls often require cross-account or organizational coordination (SCPs req
 
 ### Example Controls
 
+> IDs below follow the `csmm-<pillar>-<NNN>` convention and are illustrative — see `controls/` for the authoritative catalog.
+
 | ID           | Name                                                          | Severity  |
 |--------------|---------------------------------------------------------------|-----------|
-| IAM-L2-001   | SCPs deny root account usage in all member accounts           | critical  |
-| IAM-L2-002   | SCPs enforce approved AWS region restrictions                 | high      |
-| IAM-L2-003   | SCPs prevent disabling of CloudTrail                          | high      |
-| IAM-L2-004   | SCPs prevent disabling of GuardDuty                           | high      |
-| IAM-L2-005   | IAM roles used for EC2 instance access (no long-term keys)    | high      |
-| IAM-L2-006   | IAM roles used for Lambda execution (no long-term keys)       | high      |
-| NET-L2-001   | VPC Flow Logs enabled for all VPCs in all regions             | high      |
-| NET-L2-002   | Network ACLs configured on subnets containing sensitive workloads | medium |
-| NET-L2-003   | No VPC peering connections with overly broad route tables     | high      |
-| NET-L2-004   | TLS 1.2 or higher enforced on all load balancers              | high      |
-| NET-L2-005   | CloudFront distributions enforce HTTPS-only viewer policy     | medium    |
-| STR-L2-001   | RDS instances encrypted at rest                               | high      |
-| STR-L2-002   | RDS automated backups enabled with retention of at least 7 days | medium  |
-| STR-L2-003   | S3 server access logging enabled on sensitive buckets         | medium    |
-| STR-L2-004   | Secrets Manager or SSM Parameter Store used for all credentials | critical |
-| STR-L2-005   | No plaintext secrets in EC2 userdata or environment variables | critical  |
-| COM-L2-001   | IMDSv2 enforced on all EC2 instances                          | high      |
-| COM-L2-002   | AWS Systems Manager used for instance access (SSH keys not required) | medium |
-| COM-L2-003   | AWS Config enabled in all regions                             | high      |
-| COM-L2-004   | CloudTrail enabled across all regions with log file validation | high     |
-| COM-L2-005   | CloudTrail logs delivered to a centralized, restricted S3 bucket | medium  |
-| MON-L2-001   | CloudWatch alarm configured for root account usage            | critical  |
-| MON-L2-002   | CloudWatch alarm for unauthorized API calls                   | high      |
-| MON-L2-003   | CloudWatch alarm for IAM policy changes                       | high      |
-| MON-L2-004   | CloudWatch alarm for CloudTrail configuration changes         | high      |
-| MON-L2-005   | Security Hub enabled with CIS AWS Foundations Benchmark standard | high   |
-| MON-L2-006   | SNS alerting configured for high-severity GuardDuty findings  | high      |
-| MON-L2-007   | CloudWatch Logs centralized across all accounts and regions   | medium    |
+| csmm-iam-001   | SCPs deny root account usage in all member accounts           | critical  |
+| csmm-iam-002   | SCPs enforce approved AWS region restrictions                 | high      |
+| csmm-iam-003   | SCPs prevent disabling of CloudTrail                          | high      |
+| csmm-iam-004   | SCPs prevent disabling of GuardDuty                           | high      |
+| csmm-iam-005   | IAM roles used for EC2 instance access (no long-term keys)    | high      |
+| csmm-iam-006   | IAM roles used for Lambda execution (no long-term keys)       | high      |
+| csmm-net-001   | VPC Flow Logs enabled for all VPCs in all regions             | high      |
+| csmm-net-002   | Network ACLs configured on subnets containing sensitive workloads | medium |
+| csmm-net-003   | No VPC peering connections with overly broad route tables     | high      |
+| csmm-net-004   | TLS 1.2 or higher enforced on all load balancers              | high      |
+| csmm-net-005   | CloudFront distributions enforce HTTPS-only viewer policy     | medium    |
+| csmm-dat-001   | RDS instances encrypted at rest                               | high      |
+| csmm-dat-002   | RDS automated backups enabled with retention of at least 7 days | medium  |
+| csmm-dat-003   | S3 server access logging enabled on sensitive buckets         | medium    |
+| csmm-dat-004   | Secrets Manager or SSM Parameter Store used for all credentials | critical |
+| csmm-dat-005   | No plaintext secrets in EC2 userdata or environment variables | critical  |
+| csmm-cmp-001   | IMDSv2 enforced on all EC2 instances                          | high      |
+| csmm-cmp-002   | AWS Systems Manager used for instance access (SSH keys not required) | medium |
+| csmm-cmp-003   | AWS Config enabled in all regions                             | high      |
+| csmm-cmp-004   | CloudTrail enabled across all regions with log file validation | high     |
+| csmm-cmp-005   | CloudTrail logs delivered to a centralized, restricted S3 bucket | medium  |
+| csmm-mon-001   | CloudWatch alarm configured for root account usage            | critical  |
+| csmm-mon-002   | CloudWatch alarm for unauthorized API calls                   | high      |
+| csmm-mon-003   | CloudWatch alarm for IAM policy changes                       | high      |
+| csmm-mon-004   | CloudWatch alarm for CloudTrail configuration changes         | high      |
+| csmm-mon-005   | Security Hub enabled with CIS AWS Foundations Benchmark standard | high   |
+| csmm-mon-006   | SNS alerting configured for high-severity GuardDuty findings  | high      |
+| csmm-mon-007   | CloudWatch Logs centralized across all accounts and regions   | medium    |
 
 ### Gating Rule
 
@@ -126,7 +130,7 @@ To unlock L3 scoring, an organization must achieve ≥80% of the available weigh
 
 **Tagline:** "Apply least privilege at scale and enforce data perimeters."
 
-**Approximate Control Count:** ~35
+**Control Count:** 34
 
 ### Description
 
@@ -138,35 +142,37 @@ L3 controls are harder to verify because they often require policy analysis rath
 
 ### Example Controls
 
+> IDs below follow the `csmm-<pillar>-<NNN>` convention and are illustrative — see `controls/` for the authoritative catalog.
+
 | ID           | Name                                                              | Severity  |
 |--------------|-------------------------------------------------------------------|-----------|
-| IAM-L3-001   | Permission boundaries applied to all developer-created IAM roles  | high      |
-| IAM-L3-002   | IAM Access Analyzer enabled in all regions and the org zone       | high      |
-| IAM-L3-003   | No IAM roles with wildcard resource in Allow statements in production | critical |
-| IAM-L3-004   | ABAC tag conditions used to scope resource access in sensitive accounts | medium |
-| IAM-L3-005   | All cross-account role trust relationships audited and documented | high      |
-| IAM-L3-006   | No cross-account trust policies with wildcard principal           | critical  |
-| IAM-L3-007   | IAM Identity Center (SSO) enforced for all human console access   | high      |
-| IAM-L3-008   | Separation of duties enforced between deployment and approval roles | high     |
-| NET-L3-001   | VPC endpoints deployed for S3 and DynamoDB in all VPCs            | high      |
-| NET-L3-002   | VPC endpoints deployed for all internal AWS services in use       | medium    |
-| NET-L3-003   | No internet gateway routes present in private or data subnet route tables | high |
-| NET-L3-004   | WAF deployed on all public-facing load balancers and API Gateway stages | high |
-| NET-L3-005   | Origin access enforced for CloudFront (ALB/S3 direct access blocked) | medium |
-| STR-L3-001   | S3 bucket policies enforce aws:PrincipalOrgID or aws:SourceVpc condition | high |
-| STR-L3-002   | Customer-managed KMS keys used for sensitive data stores          | high      |
-| STR-L3-003   | KMS key policies reviewed for cross-account access scope          | high      |
-| STR-L3-004   | VPC endpoint policies restrict S3 access to organization principals | high    |
-| COM-L3-001   | Container images scanned for vulnerabilities before deployment    | high      |
-| COM-L3-002   | ECS tasks and EKS pods do not run as root                         | high      |
-| COM-L3-003   | Lambda execution roles scoped to specific resource ARNs           | high      |
-| COM-L3-004   | No hardcoded credentials in Lambda environment variables or container images | critical |
-| COM-L3-005   | EC2 instances enrolled in Systems Manager Inventory               | medium    |
-| COM-L3-006   | Patch Manager or equivalent used for OS patch compliance          | high      |
-| MON-L3-001   | CloudWatch alarms for network configuration changes (VPC, SG, NACL) | high   |
-| MON-L3-002   | CloudWatch alarm for S3 bucket policy changes                     | high      |
-| MON-L3-003   | GuardDuty S3 Protection and EKS Protection plans enabled          | medium    |
-| MON-L3-004   | Security Hub findings routed to ticketing or SIEM system          | medium    |
+| csmm-iam-001   | Permission boundaries applied to all developer-created IAM roles  | high      |
+| csmm-iam-002   | IAM Access Analyzer enabled in all regions and the org zone       | high      |
+| csmm-iam-003   | No IAM roles with wildcard resource in Allow statements in production | critical |
+| csmm-iam-004   | ABAC tag conditions used to scope resource access in sensitive accounts | medium |
+| csmm-iam-005   | All cross-account role trust relationships audited and documented | high      |
+| csmm-iam-006   | No cross-account trust policies with wildcard principal           | critical  |
+| csmm-iam-007   | IAM Identity Center (SSO) enforced for all human console access   | high      |
+| csmm-iam-008   | Separation of duties enforced between deployment and approval roles | high     |
+| csmm-net-001   | VPC endpoints deployed for S3 and DynamoDB in all VPCs            | high      |
+| csmm-net-002   | VPC endpoints deployed for all internal AWS services in use       | medium    |
+| csmm-net-003   | No internet gateway routes present in private or data subnet route tables | high |
+| csmm-net-004   | WAF deployed on all public-facing load balancers and API Gateway stages | high |
+| csmm-net-005   | Origin access enforced for CloudFront (ALB/S3 direct access blocked) | medium |
+| csmm-dat-001   | S3 bucket policies enforce aws:PrincipalOrgID or aws:SourceVpc condition | high |
+| csmm-dat-002   | Customer-managed KMS keys used for sensitive data stores          | high      |
+| csmm-dat-003   | KMS key policies reviewed for cross-account access scope          | high      |
+| csmm-dat-004   | VPC endpoint policies restrict S3 access to organization principals | high    |
+| csmm-cmp-001   | Container images scanned for vulnerabilities before deployment    | high      |
+| csmm-cmp-002   | ECS tasks and EKS pods do not run as root                         | high      |
+| csmm-cmp-003   | Lambda execution roles scoped to specific resource ARNs           | high      |
+| csmm-cmp-004   | No hardcoded credentials in Lambda environment variables or container images | critical |
+| csmm-cmp-005   | EC2 instances enrolled in Systems Manager Inventory               | medium    |
+| csmm-cmp-006   | Patch Manager or equivalent used for OS patch compliance          | high      |
+| csmm-mon-001   | CloudWatch alarms for network configuration changes (VPC, SG, NACL) | high   |
+| csmm-mon-002   | CloudWatch alarm for S3 bucket policy changes                     | high      |
+| csmm-mon-003   | GuardDuty S3 Protection and EKS Protection plans enabled          | medium    |
+| csmm-mon-004   | Security Hub findings routed to ticketing or SIEM system          | medium    |
 
 ### Gating Rule
 
@@ -178,7 +184,7 @@ To unlock L4 scoring, an organization must achieve ≥80% of the available weigh
 
 **Tagline:** "Prove your security posture through governance and auditability."
 
-**Approximate Control Count:** ~20
+**Control Count:** 10
 
 ### Description
 
@@ -190,24 +196,26 @@ L4 controls require investment in platform engineering and tooling. They are not
 
 ### Example Controls
 
+> IDs below follow the `csmm-<pillar>-<NNN>` convention and are illustrative — see `controls/` for the authoritative catalog.
+
 | ID           | Name                                                              | Severity  |
 |--------------|-------------------------------------------------------------------|-----------|
-| IAM-L4-001   | All IAM roles and policies managed exclusively through IaC        | high      |
-| IAM-L4-002   | IaC pipelines include IAM policy linting via IAM Access Analyzer  | high      |
-| IAM-L4-003   | Privilege escalation paths identified and documented via automated tooling | high |
-| IAM-L4-004   | Cross-account access paths documented and reviewed quarterly      | medium    |
-| NET-L4-001   | Network topology changes require IaC pull request approval        | medium    |
-| NET-L4-002   | Security group rule changes detected and alerted via Config rules | high      |
-| STR-L4-001   | S3 bucket configuration drift detected and alerted automatically  | high      |
-| STR-L4-002   | All data stores inventoried and classified by data sensitivity    | medium    |
-| COM-L4-001   | All compute resources traceable to an IaC source repository       | high      |
-| COM-L4-002   | Drift detection in place for EC2, ECS, Lambda, and RDS configurations | high   |
-| COM-L4-003   | Shadow IT discovery process runs at least weekly across all accounts | medium  |
-| COM-L4-004   | Blast radius analysis documented for all critical production workloads | medium |
-| COM-L4-005   | Secrets scanning enforced in all CI/CD pipelines                  | high      |
-| COM-L4-006   | Dependency vulnerability scanning enforced for application and IaC packages | medium |
-| COM-L4-007   | Resource tagging policy enforced (owner, environment, source repo) | low      |
-| COM-L4-008   | No untagged or unowned resources exist in production accounts     | medium    |
+| csmm-iam-001   | All IAM roles and policies managed exclusively through IaC        | high      |
+| csmm-iam-002   | IaC pipelines include IAM policy linting via IAM Access Analyzer  | high      |
+| csmm-iam-003   | Privilege escalation paths identified and documented via automated tooling | high |
+| csmm-iam-004   | Cross-account access paths documented and reviewed quarterly      | medium    |
+| csmm-net-001   | Network topology changes require IaC pull request approval        | medium    |
+| csmm-net-002   | Security group rule changes detected and alerted via Config rules | high      |
+| csmm-dat-001   | S3 bucket configuration drift detected and alerted automatically  | high      |
+| csmm-dat-002   | All data stores inventoried and classified by data sensitivity    | medium    |
+| csmm-cmp-001   | All compute resources traceable to an IaC source repository       | high      |
+| csmm-cmp-002   | Drift detection in place for EC2, ECS, Lambda, and RDS configurations | high   |
+| csmm-cmp-003   | Shadow IT discovery process runs at least weekly across all accounts | medium  |
+| csmm-cmp-004   | Blast radius analysis documented for all critical production workloads | medium |
+| csmm-cmp-005   | Secrets scanning enforced in all CI/CD pipelines                  | high      |
+| csmm-cmp-006   | Dependency vulnerability scanning enforced for application and IaC packages | medium |
+| csmm-cmp-007   | Resource tagging policy enforced (owner, environment, source repo) | low      |
+| csmm-cmp-008   | No untagged or unowned resources exist in production accounts     | medium    |
 
 ### Gating Rule
 
@@ -219,7 +227,7 @@ To unlock L5 scoring, an organization must achieve ≥80% of the available weigh
 
 **Tagline:** "Security that responds faster than humans can."
 
-**Approximate Control Count:** ~10
+**Control Count:** 6
 
 ### Description
 
@@ -231,18 +239,20 @@ L5 controls are aspirational for most organizations. Achieving and maintaining t
 
 ### Example Controls
 
+> IDs below follow the `csmm-<pillar>-<NNN>` convention and are illustrative — see `controls/` for the authoritative catalog.
+
 | ID           | Name                                                                  | Severity  |
 |--------------|-----------------------------------------------------------------------|-----------|
-| IAM-L5-001   | Automated remediation triggers on detected IAM policy violations      | high      |
-| IAM-L5-002   | Zero-trust access decisions enforced dynamically via a policy engine  | high      |
-| IAM-L5-003   | Just-in-time privileged access with automatic expiry enforced         | high      |
-| NET-L5-001   | Unauthorized security group rules auto-reverted within 5 minutes      | high      |
-| NET-L5-002   | Anomalous VPC traffic patterns trigger automated network isolation    | high      |
-| STR-L5-001   | Public S3 bucket access auto-blocked within 5 minutes of detection    | critical  |
-| COM-L5-001   | Compromised EC2 instances auto-isolated and snapshotted on GuardDuty finding | high |
-| COM-L5-002   | Anomaly detection integrated with automated incident response playbooks | high    |
-| COM-L5-003   | Self-healing infrastructure re-provisions from IaC on drift detection | medium    |
-| COM-L5-004   | Certificate and key rotation fully automated with zero manual steps   | medium    |
+| csmm-iam-001   | Automated remediation triggers on detected IAM policy violations      | high      |
+| csmm-iam-002   | Zero-trust access decisions enforced dynamically via a policy engine  | high      |
+| csmm-iam-003   | Just-in-time privileged access with automatic expiry enforced         | high      |
+| csmm-net-001   | Unauthorized security group rules auto-reverted within 5 minutes      | high      |
+| csmm-net-002   | Anomalous VPC traffic patterns trigger automated network isolation    | high      |
+| csmm-dat-001   | Public S3 bucket access auto-blocked within 5 minutes of detection    | critical  |
+| csmm-cmp-001   | Compromised EC2 instances auto-isolated and snapshotted on GuardDuty finding | high |
+| csmm-cmp-002   | Anomaly detection integrated with automated incident response playbooks | high    |
+| csmm-cmp-003   | Self-healing infrastructure re-provisions from IaC on drift detection | medium    |
+| csmm-cmp-004   | Certificate and key rotation fully automated with zero manual steps   | medium    |
 
 ### Gating Rule
 

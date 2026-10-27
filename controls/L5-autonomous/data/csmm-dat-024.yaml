@@ -1,0 +1,43 @@
+id: "csmm-dat-024"
+name: "Automated Secret Rotation and Credential Lifecycle"
+level: 5
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  All secrets and credentials must be automatically rotated on schedule without
+  human intervention or application downtime. Secrets Manager rotation Lambdas
+  must handle multi-user rotation for databases (alternating user strategy) and
+  single-user rotation for API keys. Failed rotations must trigger immediate
+  alerts and automatic rollback. Credential lifecycle must be fully automated:
+  creation, rotation, distribution, and revocation all happen without manual steps.
+  Zero secrets in Secrets Manager may have LastRotatedDate older than their
+  configured rotation interval. Zero secrets may have RotationEnabled=false.
+  Zero IAM access keys may have CreateDate older than 90 days as reported by
+  the IAM credential report.
+
+risk: >
+  Manual rotation is slow, error-prone, and frequently skipped under time pressure.
+  During a credential compromise, the time to rotate determines the window of
+  exposure. Automated rotation reduces this to minutes. Without automation, teams
+  accumulate long-lived secrets that become ticking time bombs — each one a
+  persistent access vector that grows more dangerous the longer it lives.
+
+verification:
+  - "Confirm every secret in Secrets Manager has an active rotation schedule with no overdue rotations"
+  - "Verify rotation Lambdas use multi-user strategy for database credentials"
+  - "Test that a forced rotation completes without application downtime or errors"
+  - "Confirm failed rotation attempts trigger PagerDuty/SNS alerts within 5 minutes"
+  - "Run: aws secretsmanager list-secrets --query 'SecretList[?RotationEnabled==`false`]' — count must be zero. Run: aws iam generate-credential-report and verify no access key has CreateDate older than 90 days. Run: aws secretsmanager list-secrets and verify no secret has LastRotatedDate exceeding its RotationRules.AutomaticallyAfterDays value."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.1"
+  - framework: "NIST 800-53"
+    control: "IA-5(1)"
+
+references:
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets_strategies.html"
+  - "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_turn-on-for-db.html"

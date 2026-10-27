@@ -1,0 +1,45 @@
+id: "csmm-dat-004"
+name: "S3 Enforce SSL/TLS via Bucket Policy"
+level: 1
+pillar: "data"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Every S3 bucket must have a bucket policy statement that explicitly denies all s3:* actions
+  when the request condition aws:SecureTransport is false. This forces all clients — SDKs,
+  CLI, application code, and AWS services accessing the bucket — to use HTTPS. The policy
+  statement must use Effect: Deny, Principal: '*', Action: 's3:*', and Condition:
+  Bool: 'aws:SecureTransport': 'false'. Enforce via AWS Config rule
+  's3-bucket-ssl-requests-only'.
+
+risk: >
+  Without a deny-on-HTTP bucket policy, S3 will accept object operations over unencrypted
+  HTTP, transmitting object data, metadata, and authentication signatures in plaintext. A
+  network observer between the requesting client and the S3 endpoint can capture object
+  contents and replay or modify signed requests. This risk is particularly elevated in
+  legacy application stacks, third-party integrations, and EC2 instances that may default
+  to HTTP endpoints if not explicitly configured.
+
+verification:
+  - "Run: aws s3api list-buckets | jq -r '.Buckets[].Name' | xargs -I{} sh -c 'aws s3api get-bucket-policy --bucket {} | jq .Policy | python3 -m json.tool | grep -A5 SecureTransport' — each bucket must show a Deny statement with aws:SecureTransport: false."
+  - "Confirm AWS Config rule 's3-bucket-ssl-requests-only' is ENABLED and reports COMPLIANT."
+  - "Use the AWS CLI with --endpoint-url http://s3.amazonaws.com to attempt an HTTP request to a protected bucket — the request should be denied."
+  - "Verify application code and SDK configurations use the default HTTPS endpoint (not overriding to HTTP) in all environments including development."
+
+compliance:
+  - framework: "CIS AWS Foundations"
+    control: "2.1.2"
+    version: "3.0"
+  - framework: "SOC2"
+    control: "CC6.7"
+  - framework: "NIST 800-53"
+    control: "SC-8"
+  - framework: "AWS Well-Architected"
+    control: "SEC 08 — How do you protect your data in transit?"
+
+references:
+  - "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html#transit"
+  - "https://repost.aws/knowledge-center/s3-bucket-policy-for-config-rule"
+  - "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-ssl-requests-only.html"
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-5"

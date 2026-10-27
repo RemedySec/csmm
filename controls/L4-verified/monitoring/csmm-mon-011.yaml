@@ -1,0 +1,42 @@
+id: "csmm-mon-011"
+name: "Security Metrics and Maturity Tracking"
+level: 4
+pillar: "monitoring"
+priority: "medium"
+severity_weight: 2
+
+description: >
+  Track and report security metrics on a weekly cadence with executive-visible
+  dashboards. Key metrics must include: MTTD (mean time to detect), MTTR (mean
+  time to respond), open finding count by severity and age, patch compliance
+  percentage, CSMM score trend over time, number of unresolved Access Analyzer
+  findings, percentage of resources with required tags, and security training
+  completion rate. Default metric targets: MTTD <= 24 hours, MTTR <= 4 hours,
+  open critical findings <= 5, CSMM score >= previous quarter's score. Any metric
+  missing its target for 2 consecutive weeks must trigger a documented remediation
+  plan. Dashboard must be accessible at a stable URL and reviewed in weekly security
+  standup. Quarterly security reviews must assess trends and adjust priorities.
+
+risk: >
+  Without measurable security metrics, security becomes a matter of opinion
+  rather than evidence. Teams cannot demonstrate improvement, justify investment,
+  or identify regressions. Leadership makes decisions based on anecdotes rather
+  than data. Metrics create accountability and make security posture visible to
+  the same stakeholders who track uptime, deployment frequency, and revenue.
+
+verification:
+  - "Confirm a security metrics dashboard exists and is updated at least weekly"
+  - "Verify MTTD, MTTR, and open findings are tracked with defined targets"
+  - "Confirm CSMM score is tracked over time with historical trend visible"
+  - "Review the last quarterly security review and confirm action items were assigned"
+  - "Verify metrics are accessible to engineering leadership, not just the security team"
+
+compliance:
+  - framework: "SOC2"
+    control: "CC7.2"
+  - framework: "NIST 800-53"
+    control: "CA-7"
+
+references:
+  - "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-insights.html"
+  - "https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/detection.html"

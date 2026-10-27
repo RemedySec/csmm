@@ -1,0 +1,44 @@
+id: "csmm-net-014"
+name: "Transit Gateway Auto-Accept Shared Attachments Disabled"
+level: 2
+pillar: "networking"
+priority: "high"
+severity_weight: 3
+
+description: >
+  Every AWS Transit Gateway must have AutoAcceptSharedAttachments set to
+  "disable". When enabled, any VPC attachment request from any account —
+  including accounts outside your AWS Organization — is automatically accepted
+  without approval. All Transit Gateway attachment requests must require explicit
+  manual or automated approval scoped to known, trusted accounts within your
+  organization before the attachment is established.
+
+risk: >
+  A Transit Gateway with auto-accept enabled is a silent lateral movement path.
+  Any AWS account that discovers your Transit Gateway ID can request an attachment
+  and, if accepted automatically, gain routable network access to every VPC
+  connected to that Transit Gateway. Orca Security documented this as a
+  cross-account network infiltration vector — an attacker who controls any AWS
+  account can use it to reach private subnets, internal services, and databases
+  that are not internet-accessible but are reachable via the Transit Gateway
+  routing table. The risk compounds in multi-account organizations where Transit
+  Gateways are shared via AWS Resource Access Manager.
+
+verification:
+  - "List all Transit Gateways: aws ec2 describe-transit-gateways | jq '.TransitGateways[] | {TgwId: .TransitGatewayId, AutoAccept: .Options.AutoAcceptSharedAttachments}'"
+  - "Confirm AutoAcceptSharedAttachments is 'disable' for every Transit Gateway. Any value of 'enable' is a critical finding."
+  - "Review pending and accepted attachments: aws ec2 describe-transit-gateway-vpc-attachments --filters Name=state,Values=available — confirm all accepted attachments belong to known, approved accounts within your organization."
+  - "If Transit Gateway is shared via RAM: aws ram list-resources --resource-owner SELF | jq '.resources[] | select(.type == \"ec2:TransitGateway\")' — confirm sharing is scoped to your AWS Organization only."
+
+compliance:
+  - framework: "SOC2"
+    control: "CC6.6"
+  - framework: "NIST 800-53"
+    control: "SC-7"
+  - framework: "AWS Well-Architected"
+    control: "SEC 06 — How do you protect your network resources?"
+
+references:
+  - "https://orca.security/resources/blog/aws-ec2-transit-gateways-automatically-accept-vpc-attachment-requests/"
+  - "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html"
+  - "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html"
